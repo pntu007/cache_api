@@ -1,7 +1,5 @@
 import java.util.*;
 
-import cache.Cache;
-
 public class DirectMappedCache extends Cache {
     static int sets = 32;
 

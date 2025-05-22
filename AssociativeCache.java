@@ -1,7 +1,5 @@
 import java.util.*;
 
-import cache.Cache;
-
 public class AssociativeCache extends Cache {
     static int ways = 32;
 

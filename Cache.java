@@ -1,5 +1,3 @@
-package cache;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -87,11 +85,12 @@ public class Cache {
             for(Block block : setBlocks) {
                 if(block.tag == req.tag && block.state == State.VALID) {
                     hit++;
-                    if (type == 0) {
+                    if(type == 0) {
                         // Read
                         @SuppressWarnings("unused")
                         long readData = block.data[req.offset / 4];
-                    } else {
+                    } 
+                    else {
                         // Write
                         block.data[req.offset / 4] = request;
                     }
@@ -100,11 +99,10 @@ public class Cache {
                 }
             }
 
-            if (foundInCache)
-                continue;
+            if(foundInCache) continue;
 
             miss++;
-            if (type == 0) {
+            if(type == 0) {
                 int pos = getNewLocation(req.set);
                 Block block = setBlocks[pos];
                 block.state = State.MISS_PENDING;
@@ -112,10 +110,11 @@ public class Cache {
                 block.tag = req.tag;
                 block.state = State.VALID;
                 List<Long> memData = getDataFromMainMemory(request);
-                for (int j = 0; j < 16; j++) {
+                for(int j = 0; j < 16; j++) {
                     block.data[j] = memData.get(j);
                 }
-            } else {
+            } 
+            else {
                 // Write miss - write to main memory
             }
         }
