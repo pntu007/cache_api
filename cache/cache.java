@@ -30,7 +30,7 @@ public class Cache {
     protected void setBlockSize(int newBlockSize) { this.blockSize = newBlockSize; }
     protected void setCacheSize(int newCacheSize) { this.cacheSize = newCacheSize; }
 
-    Block[][] cache;
+    private Block[][] cache;
 
     public Cache(int sets, int ways) {
         this.sets = sets;
@@ -72,7 +72,7 @@ public class Cache {
         return data;
     }
 
-    public void handleManualRequests(List<Long> addressList) {
+    public void handleManualRequests(List<Long> addressList, int cacheType) {
         long hit = 0, miss = 0;
         long numOfRequests = addressList.size();
 
@@ -83,7 +83,7 @@ public class Cache {
             AddressLocation req = getLocationInfo(request);
             boolean foundInCache = false;
 
-            Block[] setBlocks = cache[req.set];
+            Block[] setBlocks = cache[(cacheType == 1) ? req.set : 0];
             for(Block block : setBlocks) {
                 if(block.tag == req.tag && block.state == State.VALID) {
                     hit++;
