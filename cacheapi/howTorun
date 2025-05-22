@@ -1,0 +1,16 @@
+.\mvnw spring-boot:run
+
+What to Do in Postman
+Method: POST
+
+URL: http://localhost:8080/api/cache/simulate
+
+Headers:
+    Content-Type: application/json
+
+Body → raw → JSON (example):
+
+    json
+    {
+    "addresses": [64, 128, 64, 256, 512]
+    }
