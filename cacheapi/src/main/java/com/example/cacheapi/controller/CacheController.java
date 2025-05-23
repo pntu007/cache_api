@@ -17,4 +17,9 @@ public class CacheController {
         double[] result = cache.handleManualRequests(request.getAddresses(), 1);
         return new CacheResponse(result[0], result[1]);
     }
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "Cache API is working!";
+    }
 }
