@@ -42,24 +42,24 @@ public class CacheController {
 
     @PostMapping("/request")
     public CacheResponse simulateCache(@RequestBody CacheRequest request) {
-        double[] result;
+        long[] response;
 
         switch (selectedType.toLowerCase()) {
             case "set-associative":
-                result = sa_cache.handleManualRequests(request.getAddresses(), 1);
+                response = sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
                 break;
             case "direct":
-                result = dm_cache.handleManualRequests(request.getAddresses(), 1);
+                response = dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
                 break;
             case "associative":
-                result = a_cache.handleManualRequests(request.getAddresses(), 0);
+                response = a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
                 break;
             default:
-                result = new double[]{0, 0};
+                response = new long[]{0, 0, 0, 0};
                 break;
         }
 
-        return new CacheResponse(result[0], result[1]);
+        return new CacheResponse(response);
     }
 
     @GetMapping("/ping")

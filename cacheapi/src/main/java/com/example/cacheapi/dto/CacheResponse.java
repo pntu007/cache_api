@@ -1,19 +1,23 @@
 package com.example.cacheapi.dto;
 
+import com.example.cacheapi.model.Cache.State;
+
+
 public class CacheResponse {
-    private double hitRate;
-    private double missRate;
+    private Boolean hit;
+    private Boolean miss;
+    private long data;
+    private State blockState;
 
-    public CacheResponse(double hitRate, double missRate) {
-        this.hitRate = hitRate;
-        this.missRate = missRate;
+    public CacheResponse(long[] response) {
+        this.hit = response[0] == 1 ? true : false;
+        this.miss = response[1] == 1 ? true : false;
+        this.data = response[2];
+        this.blockState = State.values()[(int)response[3]];
     }
 
-    public double getHitRate() {
-        return hitRate;
-    }
-
-    public double getMissRate() {
-        return missRate;
-    }
+    public Boolean getHit() { return hit; }
+    public Boolean getMiss() { return miss; }
+    public long getData() { return data; }
+    public State getBlockState() { return blockState; }
 }

@@ -8,7 +8,8 @@ public class Cache {
     private int sets, ways;
     private int cacheSize = 32768; // 32KB
     private int blockSize = 64; // 64 bytes
-    protected enum State { INVALID, VALID, MISS_PENDING, MODIFIED };
+    private String writePolicy = "";
+    public static enum State { INVALID, VALID, MISS_PENDING, MODIFIED };
     private final Random rand = new Random();
 
     protected static class Block {
@@ -19,7 +20,7 @@ public class Cache {
 
     private static class AddressLocation {
         long tag;
-        int set;
+        int index;
         int offset;
     }
     
@@ -36,10 +37,11 @@ public class Cache {
         this.blockSize = blockSize;
         this.sets = sets;
         this.ways = ways;
+        this.writePolicy = writePolicy;
 
         cache = new Block[sets][ways];
-        for (int i = 0; i < sets; i++) {
-            for (int j = 0; j < ways; j++) {
+        for(int i = 0; i < sets; i++) {
+            for(int j = 0; j < ways; j++) {
                 cache[i][j] = new Block();
             }
         }
@@ -65,7 +67,7 @@ public class Cache {
         String binary = String.format("%40s", Long.toBinaryString(address)).replace(' ', '0');
         AddressLocation info = new AddressLocation();
         info.tag = Long.parseLong(binary.substring(0, 28), 2);
-        info.set = Integer.parseInt(binary.substring(28, 34), 2);
+        info.index = Integer.parseInt(binary.substring(28, 34), 2);
         info.offset = Integer.parseInt(binary.substring(34), 2);
         return info;
     }
@@ -85,41 +87,73 @@ public class Cache {
         return data;
     }
 
-    public double[] handleManualRequests(List<Long> addressList, int cacheType) {
-        long hit = 0, miss = 0;
-        long numOfRequests = addressList.size();
+    // public double[] handleManualRequests(List<Long> addressList, int cacheType) {
+    //     long hit = 0, miss = 0;
+    //     long numOfRequests = addressList.size();
 
-        for (long request : addressList) {
-            int type = rand.nextInt(2);
-            AddressLocation req = getLocationInfo(request);
-            boolean foundInCache = false;
+    //     for (long request : addressList) {
+    //         int type = rand.nextInt(2);
+    //         AddressLocation req = getLocationInfo(request);
+    //         boolean foundInCache = false;
 
-            Block[] setBlocks = (cacheType == 1) ? cache[req.set] : cache[0];
-            for (Block block : setBlocks) {
-                if (block.tag == req.tag && block.state == State.VALID) {
-                    hit++;
-                    if (type == 1) block.data[req.offset / 4] = request;
-                    foundInCache = true;
-                    break;
-                }
-            }
+    //         Block[] setBlocks = (cacheType == 1) ? cache[req.set] : cache[0];
+    //         for (Block block : setBlocks) {
+    //             if (block.tag == req.tag && block.state == State.VALID) {
+    //                 hit++;
+    //                 if (type == 1) block.data[req.offset / 4] = request;
+    //                 foundInCache = true;
+    //                 break;
+    //             }
+    //         }
 
-            if (!foundInCache) {
-                miss++;
-                if (type == 0) {
-                    int pos = getNewLocation(req.set);
-                    Block block = setBlocks[pos];
-                    block.tag = req.tag;
-                    block.state = State.VALID;
-                    List<Long> memData = getDataFromMainMemory(request);
-                    for (int j = 0; j < 16; j++) block.data[j] = memData.get(j);
-                }
+    //         if (!foundInCache) {
+    //             miss++;
+    //             if (type == 0) {
+    //                 int pos = getNewLocation(req.set);
+    //                 Block block = setBlocks[pos];
+    //                 block.tag = req.tag;
+    //                 block.state = State.VALID;
+    //                 List<Long> memData = getDataFromMainMemory(request);
+    //                 for (int j = 0; j < 16; j++) block.data[j] = memData.get(j);
+    //             }
+    //         }
+    //     }
+
+    //     double hitRate = hit * 1.0 / numOfRequests;
+    //     double missRate = miss * 1.0 / numOfRequests;
+    //     return new double[]{hitRate, missRate};
+    // }
+
+    public long[] handleManualRequests(long requestAddress, String action, long data, int cacheType) {
+        Boolean hit = false, miss = false;
+        long output = 0;
+        AddressLocation req = getLocationInfo(requestAddress);
+        boolean foundInCache = false;
+
+        Block[] setBlocks = (cacheType == 0) ? cache[0] : cache[req.index];
+        for(Block block : setBlocks) {
+            if(block.tag == req.tag && block.state == State.VALID) {
+                hit = true;
+                if(action.equals("READ")) output = block.data[req.offset / 4];
+                if(action.equals("WRITE")) block.data[req.offset / 4] = data;
+                foundInCache = true;
+                break;
             }
         }
 
-        double hitRate = hit * 1.0 / numOfRequests;
-        double missRate = miss * 1.0 / numOfRequests;
-        return new double[]{hitRate, missRate};
-    }
+        if(!foundInCache) {
+            miss = true;
+            if(action.equals("READ")) {
+                int pos = getNewLocation(req.index);
+                Block block = setBlocks[pos];
+                block.tag = req.tag;
+                block.state = State.VALID;
+                List<Long> memData = getDataFromMainMemory(requestAddress);
+                for(int j = 0; j < 16; j++) block.data[j] = memData.get(j);
+            }
+        }
 
+        long[] response = {hit ? 1 : 0, miss ? 1 : 0, output, State.VALID.ordinal()};
+        return response;
+    }
 }

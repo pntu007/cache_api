@@ -8,44 +8,16 @@ public class CacheConfig {
     private String writePolicy;    //  "write-through", "write-back"
 
     // Getters
-    public String getCacheType() {
-        return cacheType;
-    }
-
-    public int getCacheSize() {
-        return cacheSize;
-    }
-
-    public int getBlockSize() {
-        return blockSize;
-    }
-
-    public int getWays() {
-        return ways;
-    }
-
-    public String getWritePolicy() {
-        return writePolicy;
-    }
+    public int getWays() { return ways; }
+    public int getCacheSize() { return cacheSize; }
+    public int getBlockSize() { return blockSize; }
+    public String getCacheType() { return cacheType; }
+    public String getWritePolicy() { return writePolicy; }
 
     // Setters
-    public void setCacheType(String cacheType) {
-        this.cacheType = cacheType;
-    }
-
-    public void setCacheSize(int cacheSize) {
-        this.cacheSize = cacheSize;
-    }
-
-    public void setBlockSize(int blockSize) {
-        this.blockSize = blockSize;
-    }
-
-    public void setWays(int ways) {
-        this.ways = ways;
-    }
-
-    public void setWritePolicy(String writePolicy) {
-        this.writePolicy = writePolicy;
-    }
+    public void setWays(int ways) { this.ways = ways; }
+    public void setCacheSize(int cacheSize) { this.cacheSize = cacheSize; }
+    public void setBlockSize(int blockSize) { this.blockSize = blockSize; }
+    public void setCacheType(String cacheType) { this.cacheType = cacheType; }
+    public void setWritePolicy(String writePolicy) { this.writePolicy = writePolicy; }
 }
