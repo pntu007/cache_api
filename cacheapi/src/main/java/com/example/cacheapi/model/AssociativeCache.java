@@ -8,6 +8,11 @@ public class AssociativeCache extends Cache {
         super(1, ways);
     }
 
+    public AssociativeCache(int cacheSize, int blockSize, String writePolicy) {
+        // cacheSize, blockSize, sets, ways, writePolicy
+        super(cacheSize, blockSize, 1, (cacheSize / blockSize), writePolicy);
+    }
+
     // public static void main(String[] args) {
     //     AssociativeCache cache = new AssociativeCache();
     //     // Block[][] cacheBlocks = cache.getCache();

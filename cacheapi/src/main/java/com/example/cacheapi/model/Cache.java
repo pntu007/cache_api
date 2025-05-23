@@ -31,6 +31,20 @@ public class Cache {
 
     private Block[][] cache;
 
+    public Cache(int cacheSize, int blockSize, int sets, int ways, String writePolicy) {
+        this.cacheSize = cacheSize;
+        this.blockSize = blockSize;
+        this.sets = sets;
+        this.ways = ways;
+
+        cache = new Block[sets][ways];
+        for (int i = 0; i < sets; i++) {
+            for (int j = 0; j < ways; j++) {
+                cache[i][j] = new Block();
+            }
+        }
+    }
+
     public Cache(int sets, int ways) {
         this.sets = sets;
         this.ways = ways;

@@ -8,6 +8,12 @@ public class SetAssociativeCache extends Cache {
         super(sets, 8);
     }
 
+    public SetAssociativeCache(int cacheSize, int blockSize,int ways, String writePolicy) {
+        // cacheSize, blockSize, sets, ways, writePolicy
+        super(cacheSize, blockSize, (cacheSize / (blockSize * ways)), ways, writePolicy);
+    }
+
+
     // public static void main(String[] args) {
     //     SetAssociativeCache cache = new SetAssociativeCache();
     //     // Block[][] cacheBlocks = cache.getCache();

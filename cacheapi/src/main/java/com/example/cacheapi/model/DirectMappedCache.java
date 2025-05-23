@@ -8,6 +8,11 @@ public class DirectMappedCache extends Cache {
         super(sets, 1);
     }
 
+    public DirectMappedCache(int cacheSize, int blockSize, String writePolicy) {
+        // cacheSize, blockSize, sets, ways, writePolicy
+        super(cacheSize, blockSize, (cacheSize / blockSize), 1, writePolicy);
+    }
+
     // public static void main(String[] args) {
     //     DirectMappedCache cache = new DirectMappedCache();
     //     // Block[][] cacheBlocks = cache.getCache();
