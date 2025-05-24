@@ -5,19 +5,22 @@ public class CacheConfig {
     private int cacheSize;         // in bytes, 32768
     private int blockSize;         // in bytes,  64
     private int ways;              // only for set-associative
-    private String writePolicy;    //  "write-through", "write-back"
+    private String writePolicyOnHit;    //  "write-through", "write-back"
+    private String writePolicyOnMiss;    //  "write-allocate", "write-no-allocate"
 
     // Getters
     public int getWays() { return ways; }
     public int getCacheSize() { return cacheSize; }
     public int getBlockSize() { return blockSize; }
     public String getCacheType() { return cacheType; }
-    public String getWritePolicy() { return writePolicy; }
+    public String getWritePolicyOnHit() { return writePolicyOnHit; }
+    public String getWritePolicyOnMiss() { return writePolicyOnMiss; }
 
     // Setters
     public void setWays(int ways) { this.ways = ways; }
     public void setCacheSize(int cacheSize) { this.cacheSize = cacheSize; }
     public void setBlockSize(int blockSize) { this.blockSize = blockSize; }
     public void setCacheType(String cacheType) { this.cacheType = cacheType; }
-    public void setWritePolicy(String writePolicy) { this.writePolicy = writePolicy; }
+    public void setWritePolicyOnHit(String writePolicyOnHit) { this.writePolicyOnHit = writePolicyOnHit; }
+    public void setWritePolicyOnMiss(String writePolicyOnMiss) { this.writePolicyOnMiss = writePolicyOnMiss; }
 }

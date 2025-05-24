@@ -4,13 +4,9 @@ package com.example.cacheapi.model;
 public class AssociativeCache extends Cache {
     static int ways = 32;
 
-    public AssociativeCache() {
-        super(1, ways);
-    }
-
-    public AssociativeCache(int cacheSize, int blockSize, String writePolicy) {
+    public AssociativeCache(int cacheSize, int blockSize, String writePolicyOnHit, String writePolicyOnMiss) {
         // cacheSize, blockSize, sets, ways, writePolicy
-        super(cacheSize, blockSize, 1, (cacheSize / blockSize), writePolicy);
+        super(cacheSize, blockSize, 1, (cacheSize / blockSize), writePolicyOnHit, writePolicyOnMiss);
     }
 
     // public static void main(String[] args) {

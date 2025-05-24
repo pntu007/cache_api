@@ -6,6 +6,9 @@ import com.example.cacheapi.dto.CacheConfig;
 import com.example.cacheapi.model.SetAssociativeCache;
 import com.example.cacheapi.model.AssociativeCache;
 import com.example.cacheapi.model.DirectMappedCache;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,13 +28,13 @@ public class CacheController {
 
         switch (selectedType.toLowerCase()) {
             case "set-associative":
-                sa_cache = new SetAssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWays(), config.getWritePolicy());
+                sa_cache = new SetAssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWays(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
                 break;
             case "direct":
-                dm_cache = new DirectMappedCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicy());
+                dm_cache = new DirectMappedCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
                 break;
             case "associative":
-                a_cache = new AssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicy());
+                a_cache = new AssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
                 break;
             default:
                 return "Invalid cache type selected!";
@@ -40,27 +43,51 @@ public class CacheController {
         return "Configuration successful for " + selectedType + " cache.";
     }
 
+    // @PostMapping("/request")
+    // public CacheResponse simulateCache(@RequestBody CacheRequest request) {
+    //     long[] response;
+
+    //     switch (selectedType.toLowerCase()) {
+    //         case "set-associative":
+    //             response = sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
+    //             break;
+    //         case "direct":
+    //             response = dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
+    //             break;
+    //         case "associative":
+    //             response = a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
+    //             break;
+    //         default:
+    //             response = new long[]{0, 0, 0, 0};
+    //             break;
+    //     }
+
+    //     return new CacheResponse(response);
+    // }
     @PostMapping("/request")
-    public CacheResponse simulateCache(@RequestBody CacheRequest request) {
-        long[] response;
+    public CompletableFuture<CacheResponse> simulateCache(@RequestBody CacheRequest request) {
+        CompletableFuture<long[]> future;
 
         switch (selectedType.toLowerCase()) {
             case "set-associative":
-                response = sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
+                future = sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
                 break;
             case "direct":
-                response = dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
+                future = dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
                 break;
             case "associative":
-                response = a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
+                future = a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
                 break;
             default:
-                response = new long[]{0, 0, 0, 0};
+                // Return an already completed future for invalid types
+                future = CompletableFuture.completedFuture(new long[]{0, 0, 0, 0});
                 break;
         }
 
-        return new CacheResponse(response);
+        // Transform the response to CacheResponse
+        return future.thenApply(CacheResponse::new);
     }
+
 
     @GetMapping("/ping")
     public String ping() {
