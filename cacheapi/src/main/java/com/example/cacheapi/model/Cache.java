@@ -75,7 +75,7 @@ public class Cache {
         }
     }
 
-    // Miss State Hilding Registers
+    // Miss State Holding Registers
     private static class MissStateHoldingRegisters {
         State state;
         long address;
