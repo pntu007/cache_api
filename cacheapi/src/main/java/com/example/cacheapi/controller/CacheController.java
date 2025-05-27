@@ -5,6 +5,7 @@ import com.example.cacheapi.dto.CacheResponse;
 import com.example.cacheapi.dto.CacheConfig;
 import com.example.cacheapi.model.SetAssociativeCache;
 import com.example.cacheapi.model.AssociativeCache;
+import com.example.cacheapi.model.Cache.ReplacementPolicy;
 import com.example.cacheapi.model.DirectMappedCache;
 
 import java.util.concurrent.CompletableFuture;
@@ -25,16 +26,20 @@ public class CacheController {
     @PostMapping("/configure")
     public String configure(@RequestBody CacheConfig config) {
         selectedType = config.getCacheType();
+        ReplacementPolicy policy = ReplacementPolicy.valueOf(config.getReplacementPolicy().toUpperCase());
 
         switch (selectedType.toLowerCase()) {
             case "set-associative":
                 sa_cache = new SetAssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWays(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
+                sa_cache.setReplacementPolicy(policy);
                 break;
             case "direct":
                 dm_cache = new DirectMappedCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
+                dm_cache.setReplacementPolicy(policy);
                 break;
             case "associative":
                 a_cache = new AssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
+                a_cache.setReplacementPolicy(policy);
                 break;
             default:
                 return "Invalid cache type selected!";

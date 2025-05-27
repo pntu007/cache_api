@@ -7,6 +7,7 @@ public class CacheConfig {
     private int ways;              // only for set-associative
     private String writePolicyOnHit;    //  "write-through", "write-back"
     private String writePolicyOnMiss;    //  "write-allocate", "write-no-allocate"
+    private String replacementPolicy;
 
     // Getters
     public int getWays() { return ways; }
@@ -15,6 +16,7 @@ public class CacheConfig {
     public String getCacheType() { return cacheType; }
     public String getWritePolicyOnHit() { return writePolicyOnHit; }
     public String getWritePolicyOnMiss() { return writePolicyOnMiss; }
+    public String getReplacementPolicy() { return replacementPolicy; } 
 
     // Setters
     public void setWays(int ways) { this.ways = ways; }
@@ -23,4 +25,5 @@ public class CacheConfig {
     public void setCacheType(String cacheType) { this.cacheType = cacheType; }
     public void setWritePolicyOnHit(String writePolicyOnHit) { this.writePolicyOnHit = writePolicyOnHit; }
     public void setWritePolicyOnMiss(String writePolicyOnMiss) { this.writePolicyOnMiss = writePolicyOnMiss; }
+    public void setReplacementPolicy(String replacementPolicy) { this.replacementPolicy = replacementPolicy; }
 }

@@ -1,8 +1,10 @@
 package com.example.cacheapi.model;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -20,7 +22,13 @@ public class Cache {
     private String writePolicyOnMiss = "";
 
     // cache states
-    public static enum State { INVALID, VALID, MISS_PENDING, MODIFIED };
+    public static enum State { INVALID, VALID, MISS_PENDING, MODIFIED }
+
+    // Replacement Policy
+    public enum ReplacementPolicy { RANDOM, LRU, FIFO }
+    protected ReplacementPolicy policy = ReplacementPolicy.RANDOM;
+    protected Map<Integer, LinkedList<Long>> evictionQueues = new HashMap<>();
+
 
     // cache running state
     private volatile boolean running = false;
@@ -122,6 +130,10 @@ public class Cache {
             cache[i] = new HashMap<>();
         }
 
+        for (int i = 0; i < sets; i++) {
+            evictionQueues.put(i, new LinkedList<>());
+        }
+
         this.running = true;
         startCacheThread();
         startMemoryThread();
@@ -219,10 +231,19 @@ public class Cache {
         if(cacheType == 0) req.index = 0;
         Map<Long, Block> setBlocks = cache[req.index];
 
+        LinkedList<Long> queue = evictionQueues.get(req.index); // used for FIFO/LRU
+
         if(setBlocks.containsKey(req.tag)) {
             Block block = setBlocks.get(req.tag);
             if(block.state == State.VALID || block.state == State.MODIFIED) {
                 hit = true;
+
+                // LRU: update on every access
+                if (policy == ReplacementPolicy.LRU) {
+                    queue.remove(req.tag);
+                    queue.addLast(req.tag);
+                }
+
                 if(action.equals("READ")) output = block.data[req.offset / 4];
                 if(action.equals("WRITE")) {
                     block.data[req.offset / 4] = data.get(0);
@@ -261,9 +282,19 @@ public class Cache {
                 miss = true;
 
                 if(memRsp == false) {
-                    runEvictionAlgorithm(setBlocks);
+                    runEvictionAlgorithm(setBlocks,req.index);
 
                     setBlocks.put(req.tag, new Block(State.MISS_PENDING));
+
+                    // FIFO: track insertion
+                    if (policy == ReplacementPolicy.FIFO) {
+                        queue.addLast(req.tag);
+                    }
+                    // LRU: insert new tag
+                    else if (policy == ReplacementPolicy.LRU) {
+                        queue.remove(req.tag);
+                        queue.addLast(req.tag);
+                    }
 
                     if(action.equals("READ")) {
                         block.state = State.MISS_PENDING;
@@ -282,9 +313,17 @@ public class Cache {
         }
         else {
             miss = true;
-            runEvictionAlgorithm(setBlocks);
+            runEvictionAlgorithm(setBlocks,req.index);
 
             setBlocks.put(req.tag, new Block(State.MISS_PENDING));
+
+            if (policy == ReplacementPolicy.FIFO) {
+                queue.addLast(req.tag);
+            } else if (policy == ReplacementPolicy.LRU) {
+                queue.remove(req.tag);
+                queue.addLast(req.tag);
+            }
+
             updateReplacementInfo();
 
             if(action.equals("READ")) {
@@ -313,11 +352,6 @@ public class Cache {
         return info;
     }
 
-    private long getNewLocation(int set) {
-        // to get the new location within the set
-        return rand.nextLong(ways);
-    }
-
     private List<Long> getDataFromMainMemory(long req) {
         req /= 4;
         long start = (req / 16) * 16;
@@ -333,7 +367,10 @@ public class Cache {
     }
 
     private void handleWriteAllocate(long address, Map<Long, Block> blocks, long tag) {
-        if(blocks.size() == ways) runEvictionAlgorithm(blocks);
+        AddressLocation loc = getLocationInfo(address); // Needed to get the set index
+        LinkedList<Long> queue = evictionQueues.get(loc.index);
+
+        if(blocks.size() == ways) runEvictionAlgorithm(blocks,loc.index);
 
         // LOAD BLOCK INTO CACHE
         long[] incomingDataFromMemory = loadBlocksIntoCache(address);
@@ -343,6 +380,13 @@ public class Cache {
         Block block = new Block(State.MODIFIED);
         block.data = incomingDataFromMemory;
         blocks.put(tag, block);
+
+        if (policy == ReplacementPolicy.FIFO) {
+            queue.addLast(tag);  // insert new block at end
+        } else if (policy == ReplacementPolicy.LRU) {
+            queue.remove(tag);   // remove if already exists (just in case)
+            queue.addLast(tag);  // insert new block at end
+        }
     }
 
     private long[] loadBlocksIntoCache(long address) {
@@ -355,13 +399,31 @@ public class Cache {
         return incomingDataFromMemory;
     }
 
-    private void runEvictionAlgorithm(Map<Long, Block> blocks) {
+    private void runEvictionAlgorithm(Map<Long, Block> blocks,int set) {
         // LATER TO BE CHANGED BASED ON DIFFERENT ALGORITHMS
         // IMPLEMENTING RANDOM EVICTION HERE
 
-        List<Long> keys = new ArrayList<>(blocks.keySet());
-        int randomIndex = new Random().nextInt(keys.size());
-        Long keyToRemove = keys.get(randomIndex);
+        Long keyToRemove = null;
+        LinkedList<Long> queue = evictionQueues.get(set);
+
+        switch (policy) {
+            case RANDOM:
+                List<Long> keys = new ArrayList<>(blocks.keySet());
+                keyToRemove = keys.get(new Random().nextInt(keys.size()));
+                break;
+
+            case FIFO:
+                if (!queue.isEmpty()) {
+                    keyToRemove = queue.pollFirst(); // Remove oldest inserted
+                }
+                break;
+
+            case LRU:
+                if (!queue.isEmpty()) {
+                    keyToRemove = queue.pollFirst(); // Least recently used is at front
+                }
+                break;
+        }
 
         blocks.remove(keyToRemove);
 
@@ -375,6 +437,12 @@ public class Cache {
     private void updateReplacementInfo() {
         
     }
+
+    // setter for replacement policy
+    public void setReplacementPolicy(ReplacementPolicy policy) {
+        this.policy = policy;
+    }
+
 
     // to fetch cache details
     public Map<Long, Block>[] getCache() {
