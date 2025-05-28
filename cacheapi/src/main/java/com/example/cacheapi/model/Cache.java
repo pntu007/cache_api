@@ -7,11 +7,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@SuppressWarnings({"unused", "unchecked"})
+import org.springframework.context.expression.MapAccessor;
+
+@SuppressWarnings({"unused", "unchecked", "uninitialized"})
 public class Cache {
 
     // cache information
@@ -25,9 +28,10 @@ public class Cache {
     public static enum State { INVALID, VALID, MISS_PENDING, MODIFIED }
 
     // Replacement Policy
-    public enum ReplacementPolicy { RANDOM, LRU, FIFO }
+    public enum ReplacementPolicy { RANDOM, LRU, FIFO, LFU }
     protected ReplacementPolicy policy = ReplacementPolicy.RANDOM;
-    protected Map<Integer, LinkedList<Long>> evictionQueues = new HashMap<>();
+    protected TreeMap<Integer, LinkedList<Long>> evictionQueues = new TreeMap<>();
+    protected Map<Long, Integer>[] frequencyCounters;
 
 
     // cache running state
@@ -130,7 +134,7 @@ public class Cache {
             cache[i] = new HashMap<>();
         }
 
-        for (int i = 0; i < sets; i++) {
+        for(int i = 0; i < sets; i++) {
             evictionQueues.put(i, new LinkedList<>());
         }
 
@@ -230,19 +234,39 @@ public class Cache {
 
         if(cacheType == 0) req.index = 0;
         Map<Long, Block> setBlocks = cache[req.index];
-
-        LinkedList<Long> queue = evictionQueues.get(req.index); // used for FIFO/LRU
+        LinkedList<Long> queue;
+        
+        if(policy == ReplacementPolicy.FIFO || policy == ReplacementPolicy.LRU) {
+            queue = evictionQueues.get(req.index);
+        }
 
         if(setBlocks.containsKey(req.tag)) {
             Block block = setBlocks.get(req.tag);
+            
+            // FIFO: track insertion
+            if(policy == ReplacementPolicy.FIFO) {
+                queue.addLast(req.tag);
+            }
+            // LRU: update on every access
+            else if(policy == ReplacementPolicy.LRU) {
+                queue.remove(req.tag);
+                queue.addLast(req.tag);
+            }
+            else if(policy == ReplacementPolicy.LFU) {
+                int freq = frequencyCounters[req.index].get(req.tag);
+                queue = evictionQueues.get(freq);
+                queue.remove(req.tag);
+                if(evictionQueues.containsKey(freq + 1)) {
+                    evictionQueues.get(freq + 1).addLast(req.tag);
+                }
+                else {
+                    evictionQueues.put(freq + 1, new LinkedList<>());
+                    evictionQueues.get(freq + 1).addLast(req.tag);
+                }
+            }
+
             if(block.state == State.VALID || block.state == State.MODIFIED) {
                 hit = true;
-
-                // LRU: update on every access
-                if (policy == ReplacementPolicy.LRU) {
-                    queue.remove(req.tag);
-                    queue.addLast(req.tag);
-                }
 
                 if(action.equals("READ")) output = block.data[req.offset / 4];
                 if(action.equals("WRITE")) {
@@ -282,19 +306,9 @@ public class Cache {
                 miss = true;
 
                 if(memRsp == false) {
-                    runEvictionAlgorithm(setBlocks,req.index);
+                    runEvictionAlgorithm(setBlocks, req.index);
 
                     setBlocks.put(req.tag, new Block(State.MISS_PENDING));
-
-                    // FIFO: track insertion
-                    if (policy == ReplacementPolicy.FIFO) {
-                        queue.addLast(req.tag);
-                    }
-                    // LRU: insert new tag
-                    else if (policy == ReplacementPolicy.LRU) {
-                        queue.remove(req.tag);
-                        queue.addLast(req.tag);
-                    }
 
                     if(action.equals("READ")) {
                         block.state = State.MISS_PENDING;
@@ -313,15 +327,26 @@ public class Cache {
         }
         else {
             miss = true;
-            runEvictionAlgorithm(setBlocks,req.index);
+            runEvictionAlgorithm(setBlocks, req.index);
 
             setBlocks.put(req.tag, new Block(State.MISS_PENDING));
 
-            if (policy == ReplacementPolicy.FIFO) {
+            if(policy == ReplacementPolicy.FIFO) {
                 queue.addLast(req.tag);
-            } else if (policy == ReplacementPolicy.LRU) {
+            } 
+            else if(policy == ReplacementPolicy.LRU) {
                 queue.remove(req.tag);
                 queue.addLast(req.tag);
+            }
+            else {
+                frequencyCounters[req.index].put(req.tag, 1);
+                if(evictionQueues.containsKey(1)) {
+                    evictionQueues.get(1).addLast(req.tag);
+                }
+                else {
+                    evictionQueues.put(1, new LinkedList<>());
+                    evictionQueues.get(1).addLast(req.tag);
+                }
             }
 
             updateReplacementInfo();
@@ -370,7 +395,7 @@ public class Cache {
         AddressLocation loc = getLocationInfo(address); // Needed to get the set index
         LinkedList<Long> queue = evictionQueues.get(loc.index);
 
-        if(blocks.size() == ways) runEvictionAlgorithm(blocks,loc.index);
+        if(blocks.size() == ways) runEvictionAlgorithm(blocks, loc.index);
 
         // LOAD BLOCK INTO CACHE
         long[] incomingDataFromMemory = loadBlocksIntoCache(address);
@@ -399,12 +424,16 @@ public class Cache {
         return incomingDataFromMemory;
     }
 
-    private void runEvictionAlgorithm(Map<Long, Block> blocks,int set) {
+    private void runEvictionAlgorithm(Map<Long, Block> blocks, int set) {
         // LATER TO BE CHANGED BASED ON DIFFERENT ALGORITHMS
         // IMPLEMENTING RANDOM EVICTION HERE
 
         Long keyToRemove = null;
-        LinkedList<Long> queue = evictionQueues.get(set);
+        LinkedList<Long> queue;
+        if(policy == ReplacementPolicy.FIFO || policy == ReplacementPolicy.LRU) {
+            queue = evictionQueues.get(set);
+        }
+        else queue = evictionQueues.get(evictionQueues.firstKey());
 
         switch (policy) {
             case RANDOM:
@@ -413,16 +442,22 @@ public class Cache {
                 break;
 
             case FIFO:
-                if (!queue.isEmpty()) {
+                if(!queue.isEmpty()) {
                     keyToRemove = queue.pollFirst(); // Remove oldest inserted
                 }
                 break;
 
             case LRU:
-                if (!queue.isEmpty()) {
+                if(!queue.isEmpty()) {
                     keyToRemove = queue.pollFirst(); // Least recently used is at front
                 }
                 break;
+
+            case LFU:
+                if(!queue.isEmpty()) {
+                    keyToRemove = queue.pollFirst();
+                    frequencyCounters[set].remove(keyToRemove);
+                }
         }
 
         blocks.remove(keyToRemove);
@@ -441,6 +476,12 @@ public class Cache {
     // setter for replacement policy
     public void setReplacementPolicy(ReplacementPolicy policy) {
         this.policy = policy;
+        if(policy == ReplacementPolicy.LFU) {
+            frequencyCounters = new Map[sets];
+            for(int i = 0; i < sets; i++) {
+                frequencyCounters[i] = new HashMap<>();
+            }
+        }
     }
 
 
