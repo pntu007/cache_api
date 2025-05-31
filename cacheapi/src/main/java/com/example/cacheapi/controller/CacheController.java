@@ -71,6 +71,7 @@ public class CacheController {
     // }
     @PostMapping("/request")
     public CompletableFuture<CacheResponse> simulateCache(@RequestBody CacheRequest request) {
+        System.out.println(selectedType);
         CompletableFuture<long[]> future;
 
         switch (selectedType.toLowerCase()) {
@@ -78,6 +79,7 @@ public class CacheController {
                 future = sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
                 break;
             case "direct":
+                System.out.println("vuwviwivw");
                 future = dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
                 break;
             case "associative":
