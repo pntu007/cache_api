@@ -32,8 +32,7 @@ public class Cache {
     public enum ReplacementPolicy { RANDOM, LRU, FIFO, LFU }
     protected ReplacementPolicy policy = ReplacementPolicy.RANDOM;
     protected TreeMap<Integer, LinkedList<Long>> evictionQueues = new TreeMap<>();
-    protected Map<Long, Integer>[] frequencyCounters;
-
+    protected Map<Integer, Map<Long, Integer>> frequencyCounters; // set → (tag → frequency)
 
     // cache running state
     private volatile boolean running = false;
@@ -284,16 +283,8 @@ public class Cache {
                 queue.addLast(req.tag);
             }
             else if(policy == ReplacementPolicy.LFU) {
-                int freq = frequencyCounters[req.index].get(req.tag);
-                queue = evictionQueues.get(freq);
-                queue.remove(req.tag);
-                if(evictionQueues.containsKey(freq + 1)) {
-                    evictionQueues.get(freq + 1).addLast(req.tag);
-                }
-                else {
-                    evictionQueues.put(freq + 1, new LinkedList<>());
-                    evictionQueues.get(freq + 1).addLast(req.tag);
-                }
+                Map<Long, Integer> freqMap = frequencyCounters.get(req.index);
+                freqMap.put(req.tag, freqMap.getOrDefault(req.tag, 0) + 1);
             }
 
             if(block.state == State.VALID || block.state == State.MODIFIED) {
@@ -397,14 +388,8 @@ public class Cache {
                     queue.addLast(req.tag);
                 }
                 else if(policy == ReplacementPolicy.LFU) {
-                    frequencyCounters[req.index].put(req.tag, 1);
-                    if(evictionQueues.containsKey(1)) {
-                        evictionQueues.get(1).addLast(req.tag);
-                    }
-                    else {
-                        evictionQueues.put(1, new LinkedList<>());
-                        evictionQueues.get(1).addLast(req.tag);
-                    }
+                    Map<Long, Integer> freqMap = frequencyCounters.get(req.index);
+                    freqMap.put(req.tag, freqMap.getOrDefault(req.tag, 0) + 1);
                 }
 
                 System.out.println("just above adding into mshr");
@@ -547,10 +532,18 @@ public class Cache {
                 break;
 
             case LFU:
-                if(!queue.isEmpty()) {
-                    keyToRemove = queue.pollFirst();
-                    frequencyCounters[set].remove(keyToRemove);
+                Map<Long, Integer> freqMap = frequencyCounters.get(set);
+                int minFreq = Integer.MAX_VALUE;
+                for (Map.Entry<Long, Integer> entry : freqMap.entrySet()) {
+                    if (entry.getValue() < minFreq) {
+                        minFreq = entry.getValue();
+                        keyToRemove = entry.getKey();
+                    }
                 }
+                if (keyToRemove != null) {
+                    freqMap.remove(keyToRemove); // Remove from frequency map
+                }
+                break;
         }
 
         if(keyToRemove != null) blocks.remove(keyToRemove);
@@ -570,9 +563,10 @@ public class Cache {
     public void setReplacementPolicy(ReplacementPolicy policy) {
         this.policy = policy;
         if(policy == ReplacementPolicy.LFU) {
-            frequencyCounters = new Map[sets];
+            frequencyCounters = new HashMap<>();
             for(int i = 0; i < sets; i++) {
-                frequencyCounters[i] = new HashMap<>();
+                frequencyCounters.put(i, new HashMap<>());
+
             }
         }
     }
