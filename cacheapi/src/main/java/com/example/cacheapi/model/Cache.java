@@ -243,15 +243,6 @@ public class Cache {
                             memoryData.clear();
                         }
 
-                        // Create new block with fetched data
-                        AddressLocation loc = getLocationInfo(req.address);
-                        Block newBlock = new Block(State.VALID);
-                        if(req.action.equals("READ")){
-                            for(int i = 0; i < blockSize/4; i++) {
-                                newBlock.data[i] = memoryData.get(i);
-                            }
-                        }
-
                         // Send it back to cache as a "MEMORY RESPONSE"
                         memoryResponseQueue.put(new MemoryResponse(req.address, req.action, memoryData, req.state));
                     }
@@ -287,12 +278,8 @@ public class Cache {
             System.out.println("hooray BOSS TAG IS FOUND");
             Block block = setBlocks.get(req.tag);
             
-            // FIFO: track insertion
-            if(policy == ReplacementPolicy.FIFO) {
-                queue.addLast(req.tag);
-            }
             // LRU: update on every access
-            else if(policy == ReplacementPolicy.LRU) {
+            if(policy == ReplacementPolicy.LRU) {
                 queue.remove(req.tag);
                 queue.addLast(req.tag);
             }
@@ -530,6 +517,8 @@ public class Cache {
     private void runEvictionAlgorithm(Map<Long, Block> blocks, int set) {
         // LATER TO BE CHANGED BASED ON DIFFERENT ALGORITHMS
         // IMPLEMENTING RANDOM EVICTION HERE
+
+        if (blocks.size() < ways) return; 
 
         Long keyToRemove = null;
         LinkedList<Long> queue = new LinkedList<>();
