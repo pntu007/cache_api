@@ -271,6 +271,7 @@ public class Cache {
         System.out.println("requestAddress: " + requestAddress);
         System.out.println("cacheType: " + cacheType);
         System.out.println("memResp: " + memRsp);
+        System.out.println("size: " + data.size());
 
 
         Boolean hit = false, miss = false;
@@ -315,13 +316,15 @@ public class Cache {
                     output = block.data[req.offset / 4];
                 }
                 if(action.equals("WRITE")) {
-                    block.data[req.offset / 4] = data.get(0);
-                    if(writePolicyOnHit.equals("WRITE-THROUGH")) {
-                        MSHR.add(new MissStateHoldingRegisters(State.VALID, requestAddress, "WRITE", data.get(0)));
-                    }
-                    if(writePolicyOnHit.equals("WRITE-BACK")) {
-                        block.state = State.MODIFIED;
-                        writeBackBuffer.put(requestAddress, data.get(0));
+                    if(memRsp == false) {
+                        block.data[req.offset / 4] = data.get(0);
+                        if(writePolicyOnHit.equals("WRITE-THROUGH")) {
+                            MSHR.add(new MissStateHoldingRegisters(State.VALID, requestAddress, "WRITE", data.get(0)));
+                        }
+                        if(writePolicyOnHit.equals("WRITE-BACK")) {
+                            block.state = State.MODIFIED;
+                            writeBackBuffer.put(requestAddress, data.get(0));
+                        }
                     }
                 }
                 blockState = block.state;     
