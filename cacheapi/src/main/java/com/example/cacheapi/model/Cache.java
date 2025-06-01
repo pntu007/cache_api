@@ -238,6 +238,7 @@ public class Cache {
                             System.out.println("memoryData: " + memoryData.get(0));
                         }
                         else if(req.action.equals("WRITE")) {
+                            System.out.println("starting main memory write");
                             writeDataIntoMainMemory(req.address, req.data);
                             memoryData.clear();
                         }
@@ -245,8 +246,10 @@ public class Cache {
                         // Create new block with fetched data
                         AddressLocation loc = getLocationInfo(req.address);
                         Block newBlock = new Block(State.VALID);
-                        for(int i = 0; i < 16; i++) {
-                            newBlock.data[i] = memoryData.get(i);
+                        if(req.action.equals("READ")){
+                            for(int i = 0; i < blockSize/4; i++) {
+                                newBlock.data[i] = memoryData.get(i);
+                            }
                         }
 
                         // Send it back to cache as a "MEMORY RESPONSE"
@@ -414,6 +417,7 @@ public class Cache {
                     }
                 }
 
+                System.out.println("just above adding into mshr");
                 if(action.equals("READ")) {
                     MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
                     System.out.println("Added to MSHR queue");
@@ -423,7 +427,9 @@ public class Cache {
                         handleWriteAllocate(requestAddress, setBlocks, req.tag);
                     }
                     if(writePolicyOnMiss.equals("WRITE-NO-ALLOCATE")) {
+                        System.out.println("almost added to mshr");
                         MSHR.add(new MissStateHoldingRegisters(State.INVALID, requestAddress, "WRITE", data.get(0)));
+                        System.out.println("added to mshr for write no allocate");
                     }
                 }
             }
@@ -450,26 +456,36 @@ public class Cache {
     }
 
     private AddressLocation getLocationInfo(long address) {
+
+        int offsetBits = (int) (Math.log(blockSize) / Math.log(2));
+        int indexBits = (int) (Math.log(sets) / Math.log(2));
+        int tagBits = 40 - indexBits - offsetBits;
+
         String binary = String.format("%40s", Long.toBinaryString(address)).replace(' ', '0');
+
         AddressLocation info = new AddressLocation();
-        info.tag = Long.parseLong(binary.substring(0, 28), 2);
-        info.index = Integer.parseInt(binary.substring(28, 34), 2);
-        info.offset = Integer.parseInt(binary.substring(34), 2);
+        info.tag = Long.parseLong(binary.substring(0, tagBits), 2);
+        info.index = indexBits > 0 ? Integer.parseInt(binary.substring(tagBits, tagBits + indexBits), 2) : 0;
+        info.offset = Integer.parseInt(binary.substring(tagBits + indexBits), 2);
+
         return info;
     }
 
-    private List<Long> getDataFromMainMemory(long req) {
-        req /= 4;
-        long start = (req / 16) * 16;
+    private List<Long> getDataFromMainMemory(long byteAddress) {
+        long wordAddress = byteAddress / 4;
+        int blockSizeWords = blockSize / 4;
+        long start = (wordAddress / blockSizeWords) * blockSizeWords;
         List<Long> data = new ArrayList<>();
-        for (int i = 0; i < 16; i++) {
-            data.add(start + i);
+        for (int i = 0; i < blockSizeWords; i++) {
+            data.add(mainMemory[(int)(start + i)]);
         }
         return data;
     }
 
     private void writeDataIntoMainMemory(long address, long data) {
+        System.out.printf("main memory (before) : %d\n" , mainMemory[(int)address]);
         mainMemory[(int)address] = data;
+        System.out.printf("main memory (after) : %d\n" , mainMemory[(int)address]);
     }
 
     private void handleWriteAllocate(long address, Map<Long, Block> blocks, long tag) {
@@ -496,14 +512,17 @@ public class Cache {
     }
 
     private long[] loadBlocksIntoCache(long address) {
-        long addr = address / 4;
-        long start = (addr / 16) * 16;
-        long[] incomingDataFromMemory = new long[16];
-        for(int i = 0; i < 16; i++) {
+        long addr = address / 4; // convert byte address to word address
+        int blockWords = blockSize / 4; // number of words per block
+        long start = (addr / blockWords) * blockWords;
+
+        long[] incomingDataFromMemory = new long[blockWords];
+        for (int i = 0; i < blockWords; i++) {
             incomingDataFromMemory[i] = mainMemory[(int)(start + i)];
         }
         return incomingDataFromMemory;
     }
+
 
     private void runEvictionAlgorithm(Map<Long, Block> blocks, int set) {
         // LATER TO BE CHANGED BASED ON DIFFERENT ALGORITHMS
