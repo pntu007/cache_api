@@ -142,24 +142,27 @@ public class Cache {
             evictionQueues.put(i, new LinkedList<>());
         }
 
-        mainMemory = new long[] {
-            12L, 85L, 430L, 76L, 102L, 998L, 543L, 87L,
-            65L, 34L, 780L, 910L, 456L, 321L, 765L, 100L,
-            54L, 231L, 82L, 640L, 999L, 15L, 384L, 273L,
-            96L, 720L, 305L, 28L, 413L, 652L, 210L, 311L,
-            789L, 102L, 59L, 400L, 212L, 88L, 670L, 198L,
-            234L, 590L, 600L, 14L, 293L, 712L, 804L, 916L,
-            723L, 37L, 123L, 404L, 808L, 201L, 172L, 93L,
-            116L, 411L, 507L, 310L, 67L, 495L, 360L, 821L,
-            212L, 8L, 999L, 34L, 490L, 778L, 61L, 199L,
-            284L, 349L, 112L, 415L, 786L, 628L, 319L, 222L,
-            98L, 765L, 301L, 709L, 5L, 445L, 619L, 276L,
-            884L, 67L, 151L, 941L, 30L, 481L, 561L, 213L,
-            315L, 829L, 422L, 113L, 638L, 957L, 395L, 217L,
-            183L, 374L, 91L, 666L, 540L, 188L, 751L, 370L,
-            683L, 294L, 78L, 206L, 624L, 849L, 311L, 17L
-        };
+        // mainMemory = new long[] {
+        //     12L, 85L, 430L, 76L, 102L, 998L, 543L, 87L,
+        //     65L, 34L, 780L, 910L, 456L, 321L, 765L, 100L,
+        //     54L, 231L, 82L, 640L, 999L, 15L, 384L, 273L,
+        //     96L, 720L, 305L, 28L, 413L, 652L, 210L, 311L,
+        //     789L, 102L, 59L, 400L, 212L, 88L, 670L, 198L,
+        //     234L, 590L, 600L, 14L, 293L, 712L, 804L, 916L,
+        //     723L, 37L, 123L, 404L, 808L, 201L, 172L, 93L,
+        //     116L, 411L, 507L, 310L, 67L, 495L, 360L, 821L,
+        //     212L, 8L, 999L, 34L, 490L, 778L, 61L, 199L,
+        //     284L, 349L, 112L, 415L, 786L, 628L, 319L, 222L,
+        //     98L, 765L, 301L, 709L, 5L, 445L, 619L, 276L,
+        //     884L, 67L, 151L, 941L, 30L, 481L, 561L, 213L,
+        //     315L, 829L, 422L, 113L, 638L, 957L, 395L, 217L,
+        //     183L, 374L, 91L, 666L, 540L, 188L, 751L, 370L,
+        //     683L, 294L, 78L, 206L, 624L, 849L, 311L, 17L
+        // };
 
+        for(int i=0;i<mainMemory.length;i++){
+            mainMemory[i] = 1 + rand.nextInt(1000); 
+        }
 
         this.running = true;
         startCacheThread();
@@ -571,6 +574,9 @@ public class Cache {
         }
     }
 
+    public long[] getMainMemory() {
+        return mainMemory;
+    }
 
     // to fetch cache details
     public Map<Long, Block>[] getCache() {
