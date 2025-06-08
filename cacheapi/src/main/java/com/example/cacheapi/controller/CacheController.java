@@ -9,11 +9,8 @@ import com.example.cacheapi.model.AssociativeCache;
 import com.example.cacheapi.model.Cache.ReplacementPolicy;
 import com.example.cacheapi.model.DirectMappedCache;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
