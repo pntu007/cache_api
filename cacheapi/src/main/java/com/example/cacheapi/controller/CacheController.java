@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/cache")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:5173")
 public class CacheController {
 
     private SetAssociativeCache sa_cache;
@@ -65,6 +65,9 @@ public class CacheController {
                 return sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
             case "direct":
                 System.out.println("vuwviwivw");
+                System.out.println(request.getAddress());
+                System.out.println(request.getAction());
+                System.out.println(request.getData());
                 return dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
             case "associative":
                 return a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);

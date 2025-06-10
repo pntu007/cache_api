@@ -212,6 +212,10 @@ public class Cache {
 
 
     public CompletableFuture<CacheResponse> handleManualRequests(long address, String action, List<Long> data, int cacheType) {
+        System.out.println(address);
+        System.out.println(action);
+        System.out.println(data);
+        System.out.println(cacheType);
         CacheRequest req = new CacheRequest(address, action, data, cacheType);
         cacheRequestQueue.offer(req);
         return req.future;
@@ -262,11 +266,11 @@ public class Cache {
 
     // function to process requests
     public CacheResponse processRequest(long requestAddress, String action, List<Long> data, int cacheType, Boolean memRsp) {
-        System.out.println("action: " + action);
-        System.out.println("requestAddress: " + requestAddress);
-        System.out.println("cacheType: " + cacheType);
-        System.out.println("memResp: " + memRsp);
-        System.out.println("size: " + data.size());
+        // System.out.println("action: " + action);
+        // System.out.println("requestAddress: " + requestAddress);
+        // System.out.println("cacheType: " + cacheType);
+        // System.out.println("memResp: " + memRsp);
+        // System.out.println("size: " + data.size());
 
 
         Boolean hit = false, miss = false;
@@ -275,12 +279,14 @@ public class Cache {
         AddressLocation req = getLocationInfo(requestAddress);
         String oldState = "INVALID" , newState = "";
         long blockNumber = -1;
-        long memoryIndex = requestAddress/4;
+        long memoryIndex = requestAddress / 4;
         List<Long> cacheFinal = new ArrayList<>(), memoryData = new ArrayList<>();
 
         if(cacheType == 0) req.index = 0;
         Map<Long, Block> setBlocks = cache[req.index];
         LinkedList<Long> queue = evictionQueues.get(req.index);
+
+        long cacheIndex = req.index;
 
         if(setBlocks.containsKey(req.tag)) {
             System.out.println("hooray BOSS TAG IS FOUND");
@@ -303,7 +309,9 @@ public class Cache {
 
                 if(action.equals("READ")) {
                     output = block.data[req.offset / 4];
+                    System.out.println("block-content: " + block.data[0] + " " + block.data[1] + " " + block.data[2] + " " + block.data[3]);
                     cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
+                    System.out.println("cacheFinal: " + cacheFinal);
                 }
                 if(action.equals("WRITE")) {
                     if(memRsp == false) {
@@ -456,9 +464,9 @@ public class Cache {
         if(action.equals("WRITE")) memoryData.add(mainMemory[(int)requestAddress]);
         return new CacheResponse(
             cacheFinal,                // cacheFinal
-            memoryIndex,               // memoryIndex
+            memoryIndex = (action.equals("READ")) ? -1 : memoryIndex,               // memoryIndex
             memoryData,                // memoryData
-            action.toLowerCase(),      // type
+            action,                    // type
             req.index,                 // index
             req.tag,                   // tag
             req.offset,                // offset
