@@ -1,4 +1,5 @@
 package com.example.cacheapi.model;
+import com.example.cacheapi.dto.CacheResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import org.springframework.context.expression.MapAccessor;
 
@@ -66,7 +68,7 @@ public class Cache {
         String action;
         List<Long> data;
         int cacheType;
-        CompletableFuture<long[]> future;
+        CompletableFuture<CacheResponse> future;
 
         CacheRequest(long address, String action, List<Long> data, int cacheType) {
             this.address = address;
@@ -182,14 +184,14 @@ public class Cache {
 
                     CacheRequest req = cacheRequestQueue.poll();
                     if(req != null) {
-                        long[] cache_result = processRequest(req.address, req.action, req.data, req.cacheType, false);
+                        CacheResponse cache_result = processRequest(req.address, req.action, req.data, req.cacheType, false);
                         req.future.complete(cache_result);
                         didWork = true;
                     } 
                     else {
                         MemoryResponse memResp = memoryResponseQueue.poll();
                         if (memResp != null) {
-                            long[] memory_result = processRequest(memResp.address, memResp.action, memResp.data, memResp.cacheType, true);
+                            CacheResponse memory_result = processRequest(memResp.address, memResp.action, memResp.data, memResp.cacheType, true);
                             memResp.future.complete(memory_result);
                             didWork = true;
                         }
@@ -209,7 +211,7 @@ public class Cache {
     }
 
 
-    public CompletableFuture<long[]> handleManualRequests(long address, String action, List<Long> data, int cacheType) {
+    public CompletableFuture<CacheResponse> handleManualRequests(long address, String action, List<Long> data, int cacheType) {
         CacheRequest req = new CacheRequest(address, action, data, cacheType);
         cacheRequestQueue.offer(req);
         return req.future;
@@ -259,7 +261,7 @@ public class Cache {
     }
 
     // function to process requests
-    public long[] processRequest(long requestAddress, String action, List<Long> data, int cacheType, Boolean memRsp) {
+    public CacheResponse processRequest(long requestAddress, String action, List<Long> data, int cacheType, Boolean memRsp) {
         System.out.println("action: " + action);
         System.out.println("requestAddress: " + requestAddress);
         System.out.println("cacheType: " + cacheType);
@@ -271,6 +273,10 @@ public class Cache {
         long output = 0;
         State blockState = State.INVALID;
         AddressLocation req = getLocationInfo(requestAddress);
+        String oldState = "INVALID" , newState = "";
+        long blockNumber = -1;
+        long memoryIndex = requestAddress/4;
+        List<Long> cacheFinal = new ArrayList<>(), memoryData = new ArrayList<>();
 
         if(cacheType == 0) req.index = 0;
         Map<Long, Block> setBlocks = cache[req.index];
@@ -279,6 +285,8 @@ public class Cache {
         if(setBlocks.containsKey(req.tag)) {
             System.out.println("hooray BOSS TAG IS FOUND");
             Block block = setBlocks.get(req.tag);
+            oldState = block.state.name();
+            blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
             
             // LRU: update on every access
             if(policy == ReplacementPolicy.LRU) {
@@ -295,6 +303,7 @@ public class Cache {
 
                 if(action.equals("READ")) {
                     output = block.data[req.offset / 4];
+                    cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                 }
                 if(action.equals("WRITE")) {
                     if(memRsp == false) {
@@ -308,7 +317,8 @@ public class Cache {
                         }
                     }
                 }
-                blockState = block.state;     
+                blockState = block.state;   
+                newState = oldState;  
 
                 updateReplacementInfo();
             }
@@ -316,9 +326,10 @@ public class Cache {
                 if(memRsp == true) {
                     hit = true;
                     if(action.equals("READ")) {
-                        block.state = State.VALID;
+                        block.state = State.VALID; 
                         block.data = data.stream().mapToLong(Long::longValue).toArray();
                         output = block.data[req.offset / 4];
+                        cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                     }
                     else if(action.equals("WRITE")) {
                         if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
@@ -330,7 +341,8 @@ public class Cache {
                         }
                         output = -1;
                     }               
-                    blockState = block.state;     
+                    blockState = block.state;  
+                    newState = block.state.name();  
                 }
                 else {
                     miss = true;
@@ -358,14 +370,17 @@ public class Cache {
                     runEvictionAlgorithm(setBlocks, req.index);
 
                     setBlocks.put(req.tag, new Block(State.MISS_PENDING));
+                    blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
 
                     if(action.equals("READ")) {
                         block.state = State.MISS_PENDING;
+                        newState = "MISS_PENDING";
                         MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
                     }
                     if(action.equals("WRITE")) {
                         if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
                             block.state = State.MISS_PENDING;
+                            newState = "MISS_PENDING";
                             handleWriteAllocate(requestAddress, setBlocks, req.tag);
                         }
                         if(writePolicyOnMiss.equals("WRITE-NO-ALLOCATE")) {
@@ -382,6 +397,7 @@ public class Cache {
 
             if(memRsp == false) {
                 setBlocks.put(req.tag, new Block(State.MISS_PENDING));
+                blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
     
                 if(policy == ReplacementPolicy.FIFO) {
                     queue.addLast(req.tag);
@@ -414,23 +430,44 @@ public class Cache {
             else {
                 if(action.equals("READ")) {
                     setBlocks.put(req.tag, new Block(State.VALID));
+                    blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
                     setBlocks.get(req.tag).data = data.stream().mapToLong(Long::longValue).toArray();
                     output = setBlocks.get(req.tag).data[req.offset / 4];
+                    cacheFinal = Arrays.stream(setBlocks.get(req.tag).data).boxed().collect(Collectors.toList());
+                    newState = "VALID";
                 }
                 else if(action.equals("WRITE")) {
                     setBlocks.put(req.tag, new Block(State.MODIFIED));
+                    blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
                     setBlocks.get(req.tag).data = data.stream().mapToLong(Long::longValue).toArray();
                     output = 0;
+                    newState = "MODIFIED";
                 }
             }
 
             updateReplacementInfo();
         }
 
-        System.out.println("Giving output");
-        long[] response = {hit ? 1 : 0, miss ? 1 : 0, output, blockState.ordinal()};
-        System.out.println(response);
-        return response;
+        // System.out.println("Giving output");
+        // long[] response = {hit ? 1 : 0, miss ? 1 : 0, output, blockState.ordinal()};
+        // CacheResponse response = new CacheResponse();
+        // System.out.println(response);
+        
+        if(action.equals("WRITE")) memoryData.add(mainMemory[(int)requestAddress]);
+        return new CacheResponse(
+            cacheFinal,                // cacheFinal
+            memoryIndex,               // memoryIndex
+            memoryData,                // memoryData
+            action.toLowerCase(),      // type
+            req.index,                 // index
+            req.tag,                   // tag
+            req.offset,                // offset
+            blockNumber,               // block (if applicable)
+            output,                    // data
+            hit,                       // hit
+            oldState,           // oldState
+            newState            // newState
+        );
     }
 
     private AddressLocation getLocationInfo(long address) {

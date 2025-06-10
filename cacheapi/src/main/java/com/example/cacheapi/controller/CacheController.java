@@ -9,6 +9,7 @@ import com.example.cacheapi.model.AssociativeCache;
 import com.example.cacheapi.model.Cache.ReplacementPolicy;
 import com.example.cacheapi.model.DirectMappedCache;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.web.bind.annotation.*;
@@ -58,27 +59,32 @@ public class CacheController {
     @PostMapping("/request")
     public CompletableFuture<CacheResponse> simulateCache(@RequestBody CacheRequest request) {
         System.out.println(selectedType);
-        CompletableFuture<long[]> future;
 
         switch (selectedType.toLowerCase()) {
             case "set-associative":
-                future = sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
-                break;
+                return sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
             case "direct":
                 System.out.println("vuwviwivw");
-                future = dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
-                break;
+                return dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
             case "associative":
-                future = a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
-                break;
+                return a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
             default:
-                // Return an already completed future for invalid types
-                future = CompletableFuture.completedFuture(new long[]{0, 0, 0, 0});
-                break;
+                CacheResponse dummyResponse = new CacheResponse(
+                    new ArrayList<>(),  // cacheFinal
+                    -1,                 // memoryIndex
+                    new ArrayList<>(),  // memoryData
+                    "INVALID",          // type
+                    -1,                 // index
+                    -1,                 // tag
+                    -1,                 // offset
+                    -1,                 // block
+                    -1,                 // data
+                    false,              // hit
+                    "INVALID",          // oldState
+                    "INVALID"           // newState
+                );
+                return CompletableFuture.completedFuture(dummyResponse);
         }
-
-        // Transform the response to CacheResponse
-        return future.thenApply(CacheResponse::new);
     }
 
 
