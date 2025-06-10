@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/cache")
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:3000")
 public class CacheController {
 
     private SetAssociativeCache sa_cache;
