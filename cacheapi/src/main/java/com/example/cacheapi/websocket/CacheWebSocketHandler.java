@@ -1,11 +1,13 @@
 package com.example.cacheapi.websocket;
 
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Component
 public class CacheWebSocketHandler extends TextWebSocketHandler {
 
     private static final CopyOnWriteArrayList<WebSocketSession> sessions = new CopyOnWriteArrayList<>();

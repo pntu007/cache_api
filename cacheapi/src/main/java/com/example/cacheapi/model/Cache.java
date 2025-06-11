@@ -201,12 +201,13 @@ public class Cache {
                         MemoryResponse memResp = memoryResponseQueue.poll();
                         if (memResp != null) {
                             CacheResponse memory_result = processRequest(memResp.address, memResp.action, memResp.data, memResp.cacheType, true);
+                            // Broadcast to frontend
+                            if (wsHandler != null) {
+                                Thread.sleep(5000);
+                                wsHandler.broadcast(memory_result);
+                            }
                             memResp.future.complete(memory_result);
 
-                            // Broadcast to frontend
-                            if (webSocketHandler != null) {
-                                webSocketHandler.broadcast(memory_result);
-                            }
 
                             didWork = true;
                         }
@@ -331,6 +332,7 @@ public class Cache {
                 if(action.equals("WRITE")) {
                     if(memRsp == false) {
                         block.data[req.offset / 4] = data.get(0);
+                        cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                         if(writePolicyOnHit.equals("WRITE-THROUGH")) {
                             MSHR.add(new MissStateHoldingRegisters(State.VALID, requestAddress, "WRITE", data.get(0)));
                         }
@@ -437,6 +439,7 @@ public class Cache {
                 System.out.println("just above adding into mshr");
                 if(action.equals("READ")) {
                     MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
+                    newState = "MISS_PENDING";
                     System.out.println("Added to MSHR queue");
                 }
                 else if(action.equals("WRITE")) {
@@ -489,7 +492,7 @@ public class Cache {
             output,                    // data
             hit,                       // hit
             oldState,           // oldState
-            newState            // newState
+            newState          // newState
         );
     }
 
