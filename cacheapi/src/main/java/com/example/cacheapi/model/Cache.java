@@ -1,5 +1,6 @@
 package com.example.cacheapi.model;
 import com.example.cacheapi.dto.CacheResponse;
+import com.example.cacheapi.websocket.CacheWebSocketHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,10 @@ public class Cache {
     protected ReplacementPolicy policy = ReplacementPolicy.RANDOM;
     protected TreeMap<Integer, LinkedList<Long>> evictionQueues = new TreeMap<>();
     protected Map<Integer, Map<Long, Integer>> frequencyCounters; // set → (tag → frequency)
+
+
+    private CacheWebSocketHandler wsHandler;
+    private CacheWebSocketHandler webSocketHandler;
 
     // cache running state
     private volatile boolean running = false;
@@ -175,6 +180,10 @@ public class Cache {
         running = false;
     }
 
+    public void setWebSocketHandler(CacheWebSocketHandler wsHandler) {
+        this.wsHandler = wsHandler;
+    }
+
     // running cache in background
     private void startCacheThread() {
         Thread thread = new Thread(() -> {
@@ -193,6 +202,12 @@ public class Cache {
                         if (memResp != null) {
                             CacheResponse memory_result = processRequest(memResp.address, memResp.action, memResp.data, memResp.cacheType, true);
                             memResp.future.complete(memory_result);
+
+                            // Broadcast to frontend
+                            if (webSocketHandler != null) {
+                                webSocketHandler.broadcast(memory_result);
+                            }
+
                             didWork = true;
                         }
                     }

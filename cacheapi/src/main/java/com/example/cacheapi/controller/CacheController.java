@@ -1,5 +1,8 @@
 package com.example.cacheapi.controller;
 
+import com.example.cacheapi.websocket.CacheWebSocketHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.example.cacheapi.dto.CacheRequest;
 import com.example.cacheapi.dto.CacheResponse;
 import com.example.cacheapi.dto.CacheConfig;
@@ -25,6 +28,9 @@ public class CacheController {
 
     private String selectedType = "SET-ASSOCIATIVE"; // default
 
+    @Autowired
+    private CacheWebSocketHandler wsHandler;
+
     @PostMapping("/configure")
     public CompletableFuture<CacheConfigResponse> configure(@RequestBody CacheConfig config) {
         selectedType = config.getCacheType();
@@ -36,16 +42,19 @@ public class CacheController {
                 sa_cache = new SetAssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWays(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
                 sa_cache.setReplacementPolicy(policy);
                 memorySnapshot = sa_cache.getMainMemory();
+                sa_cache.setWebSocketHandler(wsHandler);
                 break;
             case "DIRECT":
                 dm_cache = new DirectMappedCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
                 dm_cache.setReplacementPolicy(policy);
                 memorySnapshot = dm_cache.getMainMemory();
+                dm_cache.setWebSocketHandler(wsHandler);
                 break;
             case "ASSOCIATIVE":
                 a_cache = new AssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
                 a_cache.setReplacementPolicy(policy);
                 memorySnapshot = a_cache.getMainMemory();
+                a_cache.setWebSocketHandler(wsHandler);
                 break;
             default:
                 return CompletableFuture.completedFuture(
