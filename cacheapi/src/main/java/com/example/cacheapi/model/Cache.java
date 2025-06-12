@@ -479,7 +479,7 @@ public class Cache {
         // CacheResponse response = new CacheResponse();
         // System.out.println(response);
         
-        if(action.equals("WRITE")) memoryData.add(mainMemory[(int)requestAddress]);
+        if(action.equals("WRITE")) memoryData.add(mainMemory[(int)requestAddress / 4]);
         return new CacheResponse(
             cacheFinal,                // cacheFinal
             memoryIndex = (action.equals("READ")) ? -1 : memoryIndex,               // memoryIndex
@@ -525,7 +525,7 @@ public class Cache {
 
     private void writeDataIntoMainMemory(long address, long data) {
         System.out.printf("main memory (before) : %d\n" , mainMemory[(int)address]);
-        mainMemory[(int)address] = data;
+        mainMemory[(int)address / 4] = data;
         System.out.printf("main memory (after) : %d\n" , mainMemory[(int)address]);
     }
 
