@@ -343,7 +343,7 @@ public class Cache {
                     }
                 }
                 blockState = block.state;   
-                newState = oldState;  
+                newState = blockState.name();  
 
                 updateReplacementInfo();
             }
