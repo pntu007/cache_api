@@ -56,7 +56,7 @@ public class Cache {
         }
 
         Block(State state) {
-            this.state = State.MISS_PENDING;
+            this.state = state;
         }
     }
 
@@ -263,6 +263,7 @@ public class Cache {
                         }
                         else if(req.action.equals("WRITE")) {
                             System.out.println("starting main memory write");
+                            System.out.println(req.state);
                             writeDataIntoMainMemory(req.address, req.data);
                             memoryData.clear();
                         }
@@ -293,6 +294,7 @@ public class Cache {
         long output = 0;
         State blockState = State.INVALID;
         AddressLocation req = getLocationInfo(requestAddress);
+        System.out.println("tag: " + req.tag);
         String oldState = "INVALID" , newState = "";
         long blockNumber = -1;
         long memoryIndex = requestAddress / 4;
@@ -308,6 +310,7 @@ public class Cache {
             System.out.println("hooray BOSS TAG IS FOUND");
             Block block = setBlocks.get(req.tag);
             oldState = block.state.name();
+            System.out.println(oldState);
             blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
             
             // LRU: update on every access
@@ -360,6 +363,7 @@ public class Cache {
                         if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
                             block.state = State.MODIFIED;
                             handleWriteAllocate(requestAddress, setBlocks, req.tag);
+                            cacheFinal = Arrays.stream(setBlocks.get(req.tag).data).boxed().collect(Collectors.toList());
                         }
                         else {
                             block.state = State.VALID;
@@ -398,20 +402,29 @@ public class Cache {
                     blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
 
                     if(action.equals("READ")) {
-                        block.state = State.MISS_PENDING;
-                        newState = "MISS_PENDING";
+                        setBlocks.put(req.tag, new Block(State.MISS_PENDING));
                         MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
+                        System.out.println("Added to MSHR queue");
                     }
-                    if(action.equals("WRITE")) {
+                    else if(action.equals("WRITE")) {
                         if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
-                            block.state = State.MISS_PENDING;
-                            newState = "MISS_PENDING";
-                            handleWriteAllocate(requestAddress, setBlocks, req.tag);
+                            setBlocks.put(req.tag, new Block(State.MISS_PENDING));
+                            MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "WRITE", data.get(0)));
                         }
                         if(writePolicyOnMiss.equals("WRITE-NO-ALLOCATE")) {
+                            setBlocks.put(req.tag, new Block(State.INVALID));
+                            System.out.println("almost added to mshr");
                             MSHR.add(new MissStateHoldingRegisters(State.INVALID, requestAddress, "WRITE", data.get(0)));
+                            System.out.println("added to mshr for write no allocate");
                         }
                     }
+
+                    newState = setBlocks.get(req.tag).state.name();
+                }
+                else {
+                    newState = "INVALID";
+                    System.out.println("Sometimes memory response will come here.");
+                    // till now we need to do nothing
                 }
             }
         }
@@ -421,7 +434,6 @@ public class Cache {
             runEvictionAlgorithm(setBlocks, req.index);
 
             if(memRsp == false) {
-                setBlocks.put(req.tag, new Block(State.MISS_PENDING));
                 blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
     
                 if(policy == ReplacementPolicy.FIFO) {
@@ -438,20 +450,24 @@ public class Cache {
 
                 System.out.println("just above adding into mshr");
                 if(action.equals("READ")) {
+                    setBlocks.put(req.tag, new Block(State.MISS_PENDING));
                     MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
-                    newState = "MISS_PENDING";
                     System.out.println("Added to MSHR queue");
                 }
                 else if(action.equals("WRITE")) {
                     if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
-                        handleWriteAllocate(requestAddress, setBlocks, req.tag);
+                        setBlocks.put(req.tag, new Block(State.MISS_PENDING));
+                        MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "WRITE", data.get(0)));
                     }
                     if(writePolicyOnMiss.equals("WRITE-NO-ALLOCATE")) {
+                        setBlocks.put(req.tag, new Block(State.INVALID));
                         System.out.println("almost added to mshr");
                         MSHR.add(new MissStateHoldingRegisters(State.INVALID, requestAddress, "WRITE", data.get(0)));
                         System.out.println("added to mshr for write no allocate");
                     }
                 }
+
+                newState = setBlocks.get(req.tag).state.name();
             }
             else {
                 if(action.equals("READ")) {
