@@ -228,10 +228,10 @@ public class Cache {
 
 
     public CompletableFuture<CacheResponse> handleManualRequests(long address, String action, List<Long> data, int cacheType) {
-        System.out.println(address);
-        System.out.println(action);
-        System.out.println(data);
-        System.out.println(cacheType);
+        // System.out.println(address);
+        // System.out.println(action);
+        // System.out.println(data);
+        // System.out.println(cacheType);
         CacheRequest req = new CacheRequest(address, action, data, cacheType);
         cacheRequestQueue.offer(req);
         return req.future;
@@ -263,7 +263,7 @@ public class Cache {
                         }
                         else if(req.action.equals("WRITE")) {
                             System.out.println("starting main memory write");
-                            System.out.println(req.state);
+                            // System.out.println(req.state);
                             writeDataIntoMainMemory(req.address, req.data);
                             memoryData.clear();
                         }
@@ -294,9 +294,10 @@ public class Cache {
         long output = 0;
         State blockState = State.INVALID;
         AddressLocation req = getLocationInfo(requestAddress);
-        System.out.println("tag: " + req.tag);
+        // System.out.println("tag: " + req.tag);
         String oldState = "INVALID" , newState = "";
         long blockNumber = -1;
+        long removedTag = -1;
         long memoryIndex = requestAddress / 4;
         List<Long> cacheFinal = new ArrayList<>(), memoryData = new ArrayList<>();
 
@@ -310,7 +311,7 @@ public class Cache {
             System.out.println("hooray BOSS TAG IS FOUND");
             Block block = setBlocks.get(req.tag);
             oldState = block.state.name();
-            System.out.println(oldState);
+            // System.out.println(oldState);
             blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
             
             // LRU: update on every access
@@ -328,7 +329,7 @@ public class Cache {
 
                 if(action.equals("READ")) {
                     output = block.data[req.offset / 4];
-                    System.out.println("block-content: " + block.data[0] + " " + block.data[1] + " " + block.data[2] + " " + block.data[3]);
+                    // System.out.println("block-content: " + block.data[0] + " " + block.data[1] + " " + block.data[2] + " " + block.data[3]);
                     cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                     System.out.println("cacheFinal: " + cacheFinal);
                 }
@@ -353,6 +354,7 @@ public class Cache {
             else if(block.state == State.MISS_PENDING) {
                 if(memRsp == true) {
                     hit = true;
+                    // runEvictionAlgorithm(setBlocks, req.index);
                     if(action.equals("READ")) {
                         block.state = State.VALID; 
                         block.data = data.stream().mapToLong(Long::longValue).toArray();
@@ -396,7 +398,7 @@ public class Cache {
 
                 if(memRsp == false) {
                     System.out.println("Misses this time");
-                    runEvictionAlgorithm(setBlocks, req.index);
+                    // runEvictionAlgorithm(setBlocks, req.index);
 
                     setBlocks.put(req.tag, new Block(State.MISS_PENDING));
                     blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
@@ -431,7 +433,7 @@ public class Cache {
         else {
             System.out.println("OOPS BOSS TAG IS NOT FOUND");
             miss = true;
-            runEvictionAlgorithm(setBlocks, req.index);
+            removedTag = runEvictionAlgorithm(setBlocks, req.index);
 
             if(memRsp == false) {
                 blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
@@ -503,6 +505,7 @@ public class Cache {
             action,                    // type
             req.index,                 // index
             req.tag,                   // tag
+            removedTag,                // removedTag
             req.offset,                // offset
             blockNumber,               // block (if applicable)
             output,                    // data
@@ -550,6 +553,7 @@ public class Cache {
         LinkedList<Long> queue = evictionQueues.get(loc.index);
 
         if(blocks.size() == ways) runEvictionAlgorithm(blocks, loc.index);
+        // FIX SOMETHING HERE
 
         // LOAD BLOCK INTO CACHE
         long[] incomingDataFromMemory = loadBlocksIntoCache(address);
@@ -581,16 +585,16 @@ public class Cache {
     }
 
 
-    private void runEvictionAlgorithm(Map<Long, Block> blocks, int set) {
+    private long runEvictionAlgorithm(Map<Long, Block> blocks, int set) {
         // LATER TO BE CHANGED BASED ON DIFFERENT ALGORITHMS
         // IMPLEMENTING RANDOM EVICTION HERE
-
-        if (blocks.size() < ways) return; 
+        System.out.println(blocks.size() + " " + ways);
+        if (blocks.size() < ways) return -1; 
 
         Long keyToRemove = null;
         LinkedList<Long> queue = new LinkedList<>();
         if(policy == ReplacementPolicy.FIFO || policy == ReplacementPolicy.LRU) {
-            System.out.println("EVICTION" + set);
+            System.out.println("EVICTION " + set);
             queue = evictionQueues.get(set);
         }
         else queue = evictionQueues.get(evictionQueues.firstKey());
@@ -628,13 +632,17 @@ public class Cache {
                 break;
         }
 
+        System.out.println(keyToRemove);
         if(keyToRemove != null) blocks.remove(keyToRemove);
+
 
         if(!writeBackBuffer.isEmpty()) {
             for(Map.Entry<Long, Long> e : writeBackBuffer.entrySet()) {
                 MSHR.add(new MissStateHoldingRegisters(State.VALID, e.getKey(), "WRITE", e.getValue()));
             }
         }
+
+        return (long)keyToRemove;
     }
 
     private void updateReplacementInfo() {

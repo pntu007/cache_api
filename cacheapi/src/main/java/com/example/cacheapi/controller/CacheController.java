@@ -88,6 +88,7 @@ public class CacheController {
                     "INVALID",          // type
                     -1,                 // index
                     -1,                 // tag
+                    -1,                 // removedTag
                     -1,                 // offset
                     -1,                 // block
                     -1,                 // data

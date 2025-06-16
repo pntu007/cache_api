@@ -8,6 +8,7 @@ public class CacheResponse {
     private String type;
     private int index;
     private long tag;
+    private long removedTag;
     private int offset;
     private long block;
     private long data;
@@ -17,7 +18,7 @@ public class CacheResponse {
 
     // ✅ Constructor
     public CacheResponse(List<Long> cacheFinal, long memoryIndex, List<Long> memoryData, String type,
-                         int index, long tag, int offset, long block, long data,
+                         int index, long tag, long removedTag, int offset, long block, long data,
                          boolean hit, String oldState, String newState) {
         this.cacheFinal = cacheFinal;
         this.memoryIndex = memoryIndex;
@@ -25,6 +26,7 @@ public class CacheResponse {
         this.type = type;
         this.index = index;
         this.tag = tag;
+        this.removedTag = removedTag;
         this.offset = offset;
         this.block = block;
         this.data = data;
@@ -50,6 +52,9 @@ public class CacheResponse {
 
     public long getTag() { return tag; }
     public void setTag(long tag) { this.tag = tag; }
+
+    public long getRemovedTag() { return removedTag; }
+    public void setRemovedTag(long removedTag) { this.removedTag = removedTag; }
 
     public int getOffset() { return offset; }
     public void setOffset(int offset) { this.offset = offset; }
