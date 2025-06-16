@@ -642,7 +642,7 @@ public class Cache {
             }
         }
 
-        return (long)keyToRemove;
+        return (keyToRemove == null) ? -1 : keyToRemove;
     }
 
     private void updateReplacementInfo() {
