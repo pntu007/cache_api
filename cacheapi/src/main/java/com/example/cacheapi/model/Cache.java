@@ -500,7 +500,7 @@ public class Cache {
         if(action.equals("WRITE")) memoryData.add(mainMemory[(int)requestAddress / 4]);
         return new CacheResponse(
             cacheFinal,                // cacheFinal
-            memoryIndex = (action.equals("READ")) ? -1 : memoryIndex,               // memoryIndex
+            memoryIndex = (memRsp && action == "READ") ? -1 : memoryIndex,               // memoryIndex
             memoryData,                // memoryData
             action,                    // type
             req.index,                 // index
