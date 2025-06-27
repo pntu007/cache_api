@@ -4,9 +4,9 @@ package com.example.cacheapi.model;
 public class DirectMappedCache extends Cache {
     static int sets = 32;
 
-    public DirectMappedCache(int cacheSize, int blockSize, String writePolicyOnHit, String writePolicyOnMiss) {
+    public DirectMappedCache(int cacheSize, int blockSize, String writePolicyOnHit, String writePolicyOnMiss, int wordSize) {
         // cacheSize, blockSize, sets, ways, writePolicy
-        super(cacheSize, blockSize, (cacheSize / blockSize), 1, writePolicyOnHit, writePolicyOnMiss);
+        super(cacheSize, blockSize, (cacheSize / blockSize), 1, writePolicyOnHit, writePolicyOnMiss, wordSize);
     }
 
     // public static void main(String[] args) {

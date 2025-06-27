@@ -15,11 +15,12 @@ public class CacheResponse {
     private boolean hit;
     private String oldState;
     private String newState;
+    private int wordSize;
 
     // ✅ Constructor
     public CacheResponse(List<Long> cacheFinal, long memoryIndex, List<Long> memoryData, String type,
                          int index, long tag, long removedTag, int offset, long block, long data,
-                         boolean hit, String oldState, String newState) {
+                         boolean hit, String oldState, String newState, int wordSize) {
         this.cacheFinal = cacheFinal;
         this.memoryIndex = memoryIndex;
         this.memoryData = memoryData;
@@ -33,6 +34,7 @@ public class CacheResponse {
         this.hit = hit;
         this.oldState = oldState;
         this.newState = newState;
+        this.wordSize = wordSize;
     }
 
     public List<Long> getCacheFinal() { return cacheFinal; }
@@ -73,4 +75,7 @@ public class CacheResponse {
 
     public String getNewState() { return newState; }
     public void setNewState(String newState) { this.newState = newState; }
+
+    public int getWordSize() { return wordSize; }
+    public void setWordSize(int wordSize) { this.wordSize = wordSize; }
 }

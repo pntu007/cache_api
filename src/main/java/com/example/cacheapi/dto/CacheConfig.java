@@ -9,6 +9,7 @@ public class CacheConfig {
     private String writePolicyOnMiss;    //  "write-allocate", "write-no-allocate"
     private String replacementPolicy;
     private int mainMemorySize;
+    private int wordSize;
 
     // Getters
     public int getWays() { return ways; }
@@ -19,6 +20,7 @@ public class CacheConfig {
     public String getWritePolicyOnMiss() { return writePolicyOnMiss; }
     public String getReplacementPolicy() { return replacementPolicy; } 
     public int getMainMemorySize() { return mainMemorySize; }
+    public int getWordSize() { return wordSize; }
 
     // Setters
     public void setWays(int ways) { this.ways = ways; }
@@ -28,4 +30,5 @@ public class CacheConfig {
     public void setWritePolicyOnHit(String writePolicyOnHit) { this.writePolicyOnHit = writePolicyOnHit; }
     public void setWritePolicyOnMiss(String writePolicyOnMiss) { this.writePolicyOnMiss = writePolicyOnMiss; }
     public void setReplacementPolicy(String replacementPolicy) { this.replacementPolicy = replacementPolicy; }
+    public void setWordSize(int wordSize) {this.wordSize = wordSize; }
 }

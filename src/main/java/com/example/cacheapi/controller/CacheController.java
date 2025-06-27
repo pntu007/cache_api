@@ -39,19 +39,19 @@ public class CacheController {
 
         switch (selectedType.toUpperCase()) {
             case "SET-ASSOCIATIVE":
-                sa_cache = new SetAssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWays(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
+                sa_cache = new SetAssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWays(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss(), config.getWordSize());
                 sa_cache.setReplacementPolicy(policy);
                 memorySnapshot = sa_cache.getMainMemory();
                 sa_cache.setWebSocketHandler(wsHandler);
                 break;
             case "DIRECT":
-                dm_cache = new DirectMappedCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
+                dm_cache = new DirectMappedCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss() , config.getWordSize());
                 dm_cache.setReplacementPolicy(policy);
                 memorySnapshot = dm_cache.getMainMemory();
                 dm_cache.setWebSocketHandler(wsHandler);
                 break;
             case "ASSOCIATIVE":
-                a_cache = new AssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss());
+                a_cache = new AssociativeCache(config.getCacheSize(), config.getBlockSize(), config.getWritePolicyOnHit(), config.getWritePolicyOnMiss(), config.getWordSize());
                 a_cache.setReplacementPolicy(policy);
                 memorySnapshot = a_cache.getMainMemory();
                 a_cache.setWebSocketHandler(wsHandler);
@@ -94,7 +94,8 @@ public class CacheController {
                     -1,                 // data
                     false,              // hit
                     "INVALID",          // oldState
-                    "INVALID"           // newState
+                    "INVALID",
+                    -1           // newState
                 );
                 return CompletableFuture.completedFuture(dummyResponse);
         }

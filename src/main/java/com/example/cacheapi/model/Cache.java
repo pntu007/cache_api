@@ -27,6 +27,7 @@ public class Cache {
     private int blockSize = 64; // 64 bytes
     private String writePolicyOnHit = "";
     private String writePolicyOnMiss = "";
+    private int wordSize=4;
 
     // cache states
     public static enum State { INVALID, VALID, MISS_PENDING, MODIFIED }
@@ -132,13 +133,14 @@ public class Cache {
     private HashMap<Long, Long> writeBackBuffer = new HashMap<>();
 
     // cache controller to set up and start running cache thread
-    public Cache(int cacheSize, int blockSize, int sets, int ways, String writePolicyOnHit, String writePolicyOnMiss) {
+    public Cache(int cacheSize, int blockSize, int sets, int ways, String writePolicyOnHit, String writePolicyOnMiss, int wordSize) {
         this.cacheSize = cacheSize;
         this.blockSize = blockSize;
         this.sets = sets;
         this.ways = ways;
         this.writePolicyOnHit = writePolicyOnHit;
         this.writePolicyOnMiss = writePolicyOnMiss;
+        this.wordSize = wordSize;
 
         cache = new Map[this.sets];
         for(int i = 0; i < sets; i++) {
@@ -511,7 +513,8 @@ public class Cache {
             output,                    // data
             hit,                       // hit
             oldState,           // oldState
-            newState          // newState
+            newState,          // newState
+            wordSize
         );
     }
 
@@ -532,8 +535,8 @@ public class Cache {
     }
 
     private List<Long> getDataFromMainMemory(long byteAddress) {
-        long wordAddress = byteAddress / 4;
-        int blockSizeWords = blockSize / 4;
+        long wordAddress = byteAddress / wordSize;
+        int blockSizeWords = blockSize / wordSize;
         long start = (wordAddress / blockSizeWords) * blockSizeWords;
         List<Long> data = new ArrayList<>();
         for (int i = 0; i < blockSizeWords; i++) {
@@ -543,8 +546,9 @@ public class Cache {
     }
 
     private void writeDataIntoMainMemory(long address, long data) {
+        int wordAddress = (int)(address / wordSize);
         System.out.printf("main memory (before) : %d\n" , mainMemory[(int)address]);
-        mainMemory[(int)address / 4] = data;
+        mainMemory[wordAddress] = data;
         System.out.printf("main memory (after) : %d\n" , mainMemory[(int)address]);
     }
 
@@ -573,8 +577,8 @@ public class Cache {
     }
 
     private long[] loadBlocksIntoCache(long address) {
-        long addr = address / 4; // convert byte address to word address
-        int blockWords = blockSize / 4; // number of words per block
+        long addr = address / wordSize; // convert byte address to word address
+        int blockWords = blockSize / wordSize; // number of words per block
         long start = (addr / blockWords) * blockWords;
 
         long[] incomingDataFromMemory = new long[blockWords];
