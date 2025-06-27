@@ -4,18 +4,18 @@ This project simulates various cache architectures through a full-stack web appl
 
 ## Table of Contents
 
-* [Cache Simulator](#-cache-simulator)
-* [Features](#-features)
-* [Tech Stack](#-tech-stack)
-* [Project Structure](#-project-structure)
-* [Setup Instructions](#️-setup-instructions)
+* [Cache Simulator](#cache-simulator)
+* [Features](#features)
+* [Tech Stack](#tech-stack)
+* [Project Structure](#project-structure)
+* [Setup Instructions](#️setup-instructions)
 
-  * [Backend Setup](#️-backend-setup)
-  * [Frontend Setup](#-frontend-setup)
-* [API Endpoints](#-api-endpoints)
-* [Example API Request](#-example-api-request)
-* [Github Link](#-github-link)
-* [Contributors](#-contributors)
+  * [Backend Setup](#️backend-setup)
+  * [Frontend Setup](#frontend-setup)
+* [API Endpoints](#api-endpoints)
+* [Example API Request](#example-api-request)
+* [Github Link](#github-link)
+* [Contributors](#contributors)
 
 
 ## Features
