@@ -27,7 +27,7 @@ public class Cache {
     private int blockSize = 64; // 64 bytes
     private String writePolicyOnHit = "";
     private String writePolicyOnMiss = "";
-    private int wordSize=4;
+    private int wordSize = 4;
 
     // cache states
     public static enum State { INVALID, VALID, MISS_PENDING, MODIFIED }
@@ -330,14 +330,14 @@ public class Cache {
                 hit = true;
 
                 if(action.equals("READ")) {
-                    output = block.data[req.offset / 4];
+                    output = block.data[req.offset / wordSize];
                     // System.out.println("block-content: " + block.data[0] + " " + block.data[1] + " " + block.data[2] + " " + block.data[3]);
                     cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                     System.out.println("cacheFinal: " + cacheFinal);
                 }
                 if(action.equals("WRITE")) {
                     if(memRsp == false) {
-                        block.data[req.offset / 4] = data.get(0);
+                        block.data[req.offset / wordSize] = data.get(0);
                         cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                         if(writePolicyOnHit.equals("WRITE-THROUGH")) {
                             MSHR.add(new MissStateHoldingRegisters(State.VALID, requestAddress, "WRITE", data.get(0)));
@@ -360,7 +360,7 @@ public class Cache {
                     if(action.equals("READ")) {
                         block.state = State.VALID; 
                         block.data = data.stream().mapToLong(Long::longValue).toArray();
-                        output = block.data[req.offset / 4];
+                        output = block.data[req.offset / wordSize];
                         cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
                     }
                     else if(action.equals("WRITE")) {
