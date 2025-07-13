@@ -67,16 +67,16 @@ public class CacheController {
 
     @PostMapping("/request")
     public CompletableFuture<CacheResponse> simulateCache(@RequestBody CacheRequest request) {
-        System.out.println(selectedType);
+        // System.out.println(selectedType);
 
         switch (selectedType.toLowerCase()) {
             case "set-associative":
                 return sa_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 2);
             case "direct":
-                System.out.println("vuwviwivw");
-                System.out.println(request.getAddress());
-                System.out.println(request.getAction());
-                System.out.println(request.getData());
+                // System.out.println("vuwviwivw");
+                // System.out.println(request.getAddress());
+                // System.out.println(request.getAction());
+                // System.out.println(request.getData());
                 return dm_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 1);
             case "associative":
                 return a_cache.handleManualRequests(request.getAddress(), request.getAction(), request.getData(), 0);
