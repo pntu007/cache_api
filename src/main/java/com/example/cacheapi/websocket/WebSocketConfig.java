@@ -11,7 +11,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(cacheWebSocketHandler(), "/ws/cache")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins("https://cache-visualizer.vercel.app");
     }
 
     @Bean
