@@ -61,21 +61,19 @@ This project simulates various cache architectures through a full-stack web appl
 ## Project Structure
 
 ```
-cache-simulator/
-│
-├── backend/                # Spring Boot application
-│   ├── controller/         # API endpoints
-│   ├── model/              # Core logic: cache, memory, block
-│   ├── dto/                # Request/response structures
-│   └── CacheApplication.java
-│
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/     # UI components
-│   │   ├── api/            # Axios-based API hooks
-│   │   └── App.jsx         # Entry point
-│
-└── README.md
+backend/                     # Spring Boot application
+     ├── controller/         # API endpoints
+     ├── model/              # Core logic: cache, memory, block
+     ├── dto/                # Request/response structures
+     └── CacheApplication.java
+
+frontend/                # React frontend
+     ├── src/
+     ├── components/     # UI components
+     ├── api/            # Axios-based API hooks
+     └── App.jsx         # Entry point
+
+README.md
 ```
 
 ## Setup Instructions
