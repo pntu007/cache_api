@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/cache")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://cache-visualizer.vercel.app")
 public class CacheController {
 
     private SetAssociativeCache sa_cache;
