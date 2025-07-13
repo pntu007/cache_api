@@ -1,14 +1,12 @@
-# Use official OpenJDK image
+# Stage 1: Build the project
+FROM maven:3.9.4-eclipse-temurin-17 AS build
+WORKDIR /build
+COPY . .
+RUN mvn clean package -DskipTests
+
+# Stage 2: Run the Spring Boot app
 FROM openjdk:17-jdk-slim
-
-# Set working directory
 WORKDIR /app
-
-# Copy the jar file into the container
-COPY target/cacheapi-0.0.1-SNAPSHOT.jar app.jar
-
-# Expose the default Spring Boot port
+COPY --from=build /build/target/*.jar app.jar
 EXPOSE 8080
-
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
