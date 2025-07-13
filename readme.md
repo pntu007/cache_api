@@ -1,4 +1,4 @@
-## Cache Simulator
+## [🔗 Cache Simulator (Live)](https://cache-visualizer.vercel.app/)
 
 This project simulates various cache architectures through a full-stack web application. It supports **Direct-Mapped**, **Set-Associative**, and **Fully-Associative** caches with configurable policies. The frontend provides an interactive interface, and the backend performs cache logic and data handling.
 
