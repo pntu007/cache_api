@@ -83,9 +83,9 @@ public class Cache {
             this.cacheType = cacheType;
             this.future = new CompletableFuture<>();
 
-            System.out.printf("address: %d\n", this.address);
-            System.out.printf("action: %s\n", this.action);
-            System.out.printf("cacheType: %d\n", this.cacheType);
+            // System.out.printf("address: %d\n", this.address);
+            // System.out.printf("action: %s\n", this.action);
+            // System.out.printf("cacheType: %d\n", this.cacheType);
         }
     }
 
@@ -230,10 +230,10 @@ public class Cache {
 
 
     public CompletableFuture<CacheResponse> handleManualRequests(long address, String action, List<Long> data, int cacheType) {
-        // System.out.println(address);
-        // System.out.println(action);
-        // System.out.println(data);
-        // System.out.println(cacheType);
+        // // System.out.println(address);
+        // // System.out.println(action);
+        // // System.out.println(data);
+        // // System.out.println(cacheType);
         CacheRequest req = new CacheRequest(address, action, data, cacheType);
         cacheRequestQueue.offer(req);
         return req.future;
@@ -245,7 +245,7 @@ public class Cache {
             while(running) {
                 try {
                     if(!MSHR.isEmpty()) {
-                        System.out.println("MSHR IS NOT EMPTY");
+                        // System.out.println("MSHR IS NOT EMPTY");
                         MissStateHoldingRegisters req;
                         synchronized(MSHR) {
                             if(MSHR.isEmpty()) continue;
@@ -259,13 +259,13 @@ public class Cache {
                         List<Long> memoryData = new ArrayList<>();
 
                         if(req.action.equals("READ")) {
-                            System.out.println("Reading from memory");
+                            // System.out.println("Reading from memory");
                             memoryData = getDataFromMainMemory(req.address);
-                            System.out.println("memoryData: " + memoryData.get(0));
+                            // System.out.println("memoryData: " + memoryData.get(0));
                         }
                         else if(req.action.equals("WRITE")) {
-                            System.out.println("starting main memory write");
-                            // System.out.println(req.state);
+                            // System.out.println("starting main memory write");
+                            // // System.out.println(req.state);
                             writeDataIntoMainMemory(req.address, req.data);
                             memoryData.clear();
                         }
@@ -285,18 +285,18 @@ public class Cache {
 
     // function to process requests
     public CacheResponse processRequest(long requestAddress, String action, List<Long> data, int cacheType, Boolean memRsp) {
-        // System.out.println("action: " + action);
-        // System.out.println("requestAddress: " + requestAddress);
-        // System.out.println("cacheType: " + cacheType);
-        // System.out.println("memResp: " + memRsp);
-        // System.out.println("size: " + data.size());
+        // // System.out.println("action: " + action);
+        // // System.out.println("requestAddress: " + requestAddress);
+        // // System.out.println("cacheType: " + cacheType);
+        // // System.out.println("memResp: " + memRsp);
+        // // System.out.println("size: " + data.size());
 
 
         Boolean hit = false, miss = false;
         long output = 0;
         State blockState = State.INVALID;
         AddressLocation req = getLocationInfo(requestAddress);
-        // System.out.println("tag: " + req.tag);
+        // // System.out.println("tag: " + req.tag);
         String oldState = "INVALID" , newState = "";
         long blockNumber = -1;
         long removedTag = -1;
@@ -310,10 +310,10 @@ public class Cache {
         long cacheIndex = req.index;
 
         if(setBlocks.containsKey(req.tag)) {
-            System.out.println("hooray BOSS TAG IS FOUND");
+            // System.out.println("hooray BOSS TAG IS FOUND");
             Block block = setBlocks.get(req.tag);
             oldState = block.state.name();
-            // System.out.println(oldState);
+            // // System.out.println(oldState);
             blockNumber = evictionQueues.get(req.index).indexOf(req.tag);
             
             // LRU: update on every access
@@ -331,9 +331,9 @@ public class Cache {
 
                 if(action.equals("READ")) {
                     output = block.data[req.offset / wordSize];
-                    // System.out.println("block-content: " + block.data[0] + " " + block.data[1] + " " + block.data[2] + " " + block.data[3]);
+                    // // System.out.println("block-content: " + block.data[0] + " " + block.data[1] + " " + block.data[2] + " " + block.data[3]);
                     cacheFinal = Arrays.stream(block.data).boxed().collect(Collectors.toList());
-                    System.out.println("cacheFinal: " + cacheFinal);
+                    // System.out.println("cacheFinal: " + cacheFinal);
                 }
                 if(action.equals("WRITE")) {
                     if(memRsp == false) {
@@ -399,7 +399,7 @@ public class Cache {
                 miss = true;
 
                 if(memRsp == false) {
-                    System.out.println("Misses this time");
+                    // System.out.println("Misses this time");
                     // runEvictionAlgorithm(setBlocks, req.index);
 
                     setBlocks.put(req.tag, new Block(State.MISS_PENDING));
@@ -408,7 +408,7 @@ public class Cache {
                     if(action.equals("READ")) {
                         setBlocks.put(req.tag, new Block(State.MISS_PENDING));
                         MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
-                        System.out.println("Added to MSHR queue");
+                        // System.out.println("Added to MSHR queue");
                     }
                     else if(action.equals("WRITE")) {
                         if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
@@ -417,9 +417,9 @@ public class Cache {
                         }
                         if(writePolicyOnMiss.equals("WRITE-NO-ALLOCATE")) {
                             setBlocks.put(req.tag, new Block(State.INVALID));
-                            System.out.println("almost added to mshr");
+                            // System.out.println("almost added to mshr");
                             MSHR.add(new MissStateHoldingRegisters(State.INVALID, requestAddress, "WRITE", data.get(0)));
-                            System.out.println("added to mshr for write no allocate");
+                            // System.out.println("added to mshr for write no allocate");
                         }
                     }
 
@@ -427,13 +427,13 @@ public class Cache {
                 }
                 else {
                     newState = "INVALID";
-                    System.out.println("Sometimes memory response will come here.");
+                    // System.out.println("Sometimes memory response will come here.");
                     // till now we need to do nothing
                 }
             }
         }
         else {
-            System.out.println("OOPS BOSS TAG IS NOT FOUND");
+            // System.out.println("OOPS BOSS TAG IS NOT FOUND");
             miss = true;
             removedTag = runEvictionAlgorithm(setBlocks, req.index);
 
@@ -452,11 +452,11 @@ public class Cache {
                     freqMap.put(req.tag, freqMap.getOrDefault(req.tag, 0) + 1);
                 }
 
-                System.out.println("just above adding into mshr");
+                // System.out.println("just above adding into mshr");
                 if(action.equals("READ")) {
                     setBlocks.put(req.tag, new Block(State.MISS_PENDING));
                     MSHR.add(new MissStateHoldingRegisters(State.MISS_PENDING, requestAddress, "READ", 0));
-                    System.out.println("Added to MSHR queue");
+                    // System.out.println("Added to MSHR queue");
                 }
                 else if(action.equals("WRITE")) {
                     if(writePolicyOnMiss.equals("WRITE-ALLOCATE")) {
@@ -465,9 +465,9 @@ public class Cache {
                     }
                     if(writePolicyOnMiss.equals("WRITE-NO-ALLOCATE")) {
                         setBlocks.put(req.tag, new Block(State.INVALID));
-                        System.out.println("almost added to mshr");
+                        // System.out.println("almost added to mshr");
                         MSHR.add(new MissStateHoldingRegisters(State.INVALID, requestAddress, "WRITE", data.get(0)));
-                        System.out.println("added to mshr for write no allocate");
+                        // System.out.println("added to mshr for write no allocate");
                     }
                 }
 
@@ -494,10 +494,10 @@ public class Cache {
             updateReplacementInfo();
         }
 
-        // System.out.println("Giving output");
+        // // System.out.println("Giving output");
         // long[] response = {hit ? 1 : 0, miss ? 1 : 0, output, blockState.ordinal()};
         // CacheResponse response = new CacheResponse();
-        // System.out.println(response);
+        // // System.out.println(response);
         
         if(action.equals("WRITE")) memoryData.add(mainMemory[(int)requestAddress / 4]);
         return new CacheResponse(
@@ -547,9 +547,9 @@ public class Cache {
 
     private void writeDataIntoMainMemory(long address, long data) {
         int wordAddress = (int)(address / wordSize);
-        System.out.printf("main memory (before) : %d\n" , mainMemory[(int)address]);
+        // System.out.printf("main memory (before) : %d\n" , mainMemory[(int)address]);
         mainMemory[wordAddress] = data;
-        System.out.printf("main memory (after) : %d\n" , mainMemory[(int)address]);
+        // System.out.printf("main memory (after) : %d\n" , mainMemory[(int)address]);
     }
 
     private void handleWriteAllocate(long address, Map<Long, Block> blocks, long tag) {
@@ -592,13 +592,13 @@ public class Cache {
     private long runEvictionAlgorithm(Map<Long, Block> blocks, int set) {
         // LATER TO BE CHANGED BASED ON DIFFERENT ALGORITHMS
         // IMPLEMENTING RANDOM EVICTION HERE
-        System.out.println(blocks.size() + " " + ways);
+        // System.out.println(blocks.size() + " " + ways);
         if (blocks.size() < ways) return -1; 
 
         Long keyToRemove = null;
         LinkedList<Long> queue = new LinkedList<>();
         if(policy == ReplacementPolicy.FIFO || policy == ReplacementPolicy.LRU) {
-            System.out.println("EVICTION " + set);
+            // System.out.println("EVICTION " + set);
             queue = evictionQueues.get(set);
         }
         else queue = evictionQueues.get(evictionQueues.firstKey());
@@ -636,7 +636,7 @@ public class Cache {
                 break;
         }
 
-        System.out.println(keyToRemove);
+        // System.out.println(keyToRemove);
         if(keyToRemove != null) blocks.remove(keyToRemove);
 
 
