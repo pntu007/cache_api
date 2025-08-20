@@ -2,8 +2,8 @@ name: Keep Cache API Alive
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # runs every 14 minutes (safe for Render free tier)
-  workflow_dispatch:         # allow manual trigger
+    - cron: "*/14 * * * *" 
+  workflow_dispatch:       
 
 jobs:
   ping:
