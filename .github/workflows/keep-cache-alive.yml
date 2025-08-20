@@ -12,6 +12,6 @@ jobs:
       - name: Send ping to Cache API
         run: |
           echo "Pinging Cache API..."
-          response=$(curl -w "\nHTTP %{http_code}\n" https://https://cache-api-7gql.onrender.com/ping)
+          response=$(curl -w "\nHTTP %{http_code}\n" https://cache-api-7gql.onrender.com/api/cache/ping)
           echo "Response from server:"
           echo "$response"
