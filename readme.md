@@ -131,7 +131,7 @@ Configure the cache architecture before sending requests.
   "ways": 4,                              // Used only if SET-ASSOCIATIVE else any value
   "writePolicyOnHit": "WRITE-THROUGH",    // Options: WRITE-THROUGH, WRITE-BACK
   "writePolicyOnMiss": "WRITE-ALLOCATE",  // Options: WRITE-ALLOCATE, WRITE-NO-ALLOCATE
-  "replacementPolicy": "LFU",             // Options: LRU, FIFO, LFU, Random
+  "replacementPolicy": "LFU",             // Options: LRU, FIFO, LFU, RANDOM
   "wordSize": 8                           // In bytes 
 }
 ```
@@ -146,7 +146,7 @@ Read from or write to the cache (after configuration).
 ```json
 {
   "address": 0,         // Memory Address
-  "action": "read",     // "read" or "write"
+  "action": "read",     // "READ" or "WRITE"
   "data": [77]          // Required for write; ignored for read
 }
 ```
