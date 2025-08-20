@@ -1,0 +1,17 @@
+name: Keep Cache API Alive
+
+on:
+  schedule:
+    - cron: "*/14 * * * *"   # runs every 14 minutes (safe for Render free tier)
+  workflow_dispatch:         # allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send ping to Cache API
+        run: |
+          echo "Pinging Cache API..."
+          response=$(curl -w "\nHTTP %{http_code}\n" https://https://cache-api-7gql.onrender.com/ping)
+          echo "Response from server:"
+          echo "$response"
