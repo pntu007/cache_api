@@ -16,8 +16,7 @@ public class CacheResponse {
     private String oldState;
     private String newState;
     private int wordSize;
-
-    // ✅ Constructor
+    
     public CacheResponse(List<Long> cacheFinal, long memoryIndex, List<Long> memoryData, String type,
                          int index, long tag, long removedTag, int offset, long block, long data,
                          boolean hit, String oldState, String newState, int wordSize) {
